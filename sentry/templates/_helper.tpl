@@ -115,6 +115,17 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{- end -}}
 {{- end -}}
 
+/*
+Set Snuba api address
+*/
+{{- define "snuba.api" -}}
+{{- if .Values.snuba.api.address -}}
+{{ .Values.snuba.api.address }}
+{{- else -}}
+http://{{ template "sentry.fullname" . }}-snuba:{{ template "snuba.port" . }}
+{{- end -}}
+{{- end -}}
+
 {{/*
 Set postgres host
 */}}
