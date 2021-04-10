@@ -450,8 +450,15 @@ kafka:
 externalKafka:
   ## Hostname or ip address of external kafka
   ##
-  # host: "kafka-confluent"
+  # hosts:
+  #   - "kafka-confluent"
   port: 9092
+  # topics:
+  #   ingestEvents: ""
+  #   ingestAttachments: ""
+  #   ingestTransactions: ""
+  #   ingestSessions: ""
+  #   outcomes: ""
 
 redis:
   enabled: true
