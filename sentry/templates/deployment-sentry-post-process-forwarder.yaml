@@ -63,13 +63,21 @@ spec:
           - "post-process-forwarder"
           - "--commit-batch-size"
           - "{{ default "1" .Values.sentry.postProcessForward.commitBatchSize }}"
-          {{- if and (not .Values.kafka.enabled) .Values.externalKafka.topics }}
+          {{- if and (not .Values.kafka.enabled) }}
+          {{- if .Values.externalKafka.topics.commitLog }}
           - "--commit-log-topic"
           - "{{ .Values.externalKafka.topics.commitLog }}"
+          {{- end }}
+          {{- with .Values.externalKafka.consumerGroups }}
+          {{- if .Values.sentry.postProcess }}
           - "--consumer-group"
-          - "{{ .Values.externalKafka.consumerGroups.postProcessor }}"
+          - "{{ .postProcessor }}"
+          {{- end }}
+          {{- if .eventsSubscriptions }}
           - "--synchronize-commit-group"
-          - "{{ .Values.externalKafka.consumerGroups.eventsSubscriptions }}"
+          - "{{ .eventsSubscriptions }}"
+          {{- end }}
+          {{- end }}
           {{- end }}
         env:
         - name: SNUBA
