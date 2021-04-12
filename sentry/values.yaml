@@ -131,6 +131,15 @@ sentry:
     # tolerations: []
     # podLabels: []
     # commitBatchSize: 1
+  subscriptionConsumerEvents:
+    replicas: 1
+    env: []
+    resources: {}
+    affinity: {}
+    nodeSelector: {}
+    # tolerations: []
+    # podLabels: []
+    # commitBatchSize: 1
   cleanup:
     enabled: true
     schedule: "0 0 * * *"
@@ -459,6 +468,7 @@ externalKafka:
   #   ingestTransactions: ""
   #   ingestSessions: ""
   #   outcomes: ""
+  #   eventsSubscriptionResults: ""
 
 redis:
   enabled: true
