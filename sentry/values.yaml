@@ -484,7 +484,9 @@ externalKafka:
   #   transactionsSubscriptionResults: ""
   #   replacement: ""
   #   comitLog: ""
-  #   consumerGroups:
+  # consumerGroups:
+  #   eventConsumer: ""
+  #   outcomesCunsumer: ""
 
 redis:
   enabled: true
