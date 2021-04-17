@@ -57,7 +57,28 @@ spec:
       - name: {{ .Chart.Name }}-post-process-forward
         image: "{{ template "sentry.image" . }}"
         imagePullPolicy: {{ default "IfNotPresent" .Values.images.sentry.pullPolicy }}
-        command: ["sentry", "run", "post-process-forwarder", "--commit-batch-size", "{{ default "1" .Values.sentry.postProcessForward.commitBatchSize }}"]
+        command:
+          - "sentry"
+          - "run"
+          - "post-process-forwarder"
+          - "--commit-batch-size"
+          - "{{ default "1" .Values.sentry.postProcessForward.commitBatchSize }}"
+          {{- if and (not .Values.kafka.enabled) }}
+          {{- if .Values.externalKafka.topics.commitLog }}
+          - "--commit-log-topic"
+          - "{{ .Values.externalKafka.topics.commitLog }}"
+          {{- end }}
+          {{- with .Values.externalKafka.consumerGroups }}
+          {{- if .Values.sentry.postProcess }}
+          - "--consumer-group"
+          - "{{ .postProcessor }}"
+          {{- end }}
+          {{- if .eventsSubscriptions }}
+          - "--synchronize-commit-group"
+          - "{{ .eventsSubscriptions }}"
+          {{- end }}
+          {{- end }}
+          {{- end }}
         env:
         - name: SNUBA
           value: http://{{ template "sentry.fullname" . }}-snuba:{{ template "snuba.port" }}
