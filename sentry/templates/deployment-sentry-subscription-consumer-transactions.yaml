@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ template "sentry.fullname" . }}-post-process-forward
+  name: {{ template "sentry.fullname" . }}-subscription-consumer-transactions
   labels:
     app: sentry
     chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
@@ -21,8 +21,8 @@ spec:
     matchLabels:
         app: sentry
         release: "{{ .Release.Name }}"
-        role: sentry-post-process-forward
-  replicas: {{ .Values.sentry.postProcessForward.replicas }}
+        role: sentry-subscription-consumer-transactions
+  replicas: {{ .Values.sentry.subscriptionConsumerTransactions.replicas }}
   template:
     metadata:
       annotations:
@@ -32,56 +32,46 @@ spec:
       labels:
         app: sentry
         release: "{{ .Release.Name }}"
-        role: sentry-post-process-forward
-        {{- if .Values.sentry.postProcessForward.podLabels }}
-{{ toYaml .Values.sentry.postProcessForward.podLabels | indent 8 }}
+        role: sentry-subscription-consumer-transactions
+        {{- if .Values.sentry.subscriptionConsumerTransactions.podLabels }}
+{{ toYaml .Values.sentry.subscriptionConsumerTransactions.podLabels | indent 8 }}
         {{- end }}
     spec:
       affinity:
-      {{- if .Values.sentry.postProcessForward.affinity }}
-{{ toYaml .Values.sentry.postProcessForward.affinity | indent 8 }}
+      {{- if .Values.sentry.subscriptionConsumerTransactions.affinity }}
+{{ toYaml .Values.sentry.subscriptionConsumerTransactions.affinity | indent 8 }}
       {{- end }}
-      {{- if .Values.sentry.postProcessForward.nodeSelector }}
+      {{- if .Values.sentry.subscriptionConsumerTransactions.nodeSelector }}
       nodeSelector:
-{{ toYaml .Values.sentry.postProcessForward.nodeSelector | indent 8 }}
+{{ toYaml .Values.sentry.subscriptionConsumerTransactions.nodeSelector | indent 8 }}
       {{- end }}
-      {{- if .Values.sentry.postProcessForward.tolerations }}
+      {{- if .Values.sentry.subscriptionConsumerTransactions.tolerations }}
       tolerations:
-{{ toYaml .Values.sentry.postProcessForward.tolerations | indent 8 }}
+{{ toYaml .Values.sentry.subscriptionConsumerTransactions.tolerations | indent 8 }}
       {{- end }}
       {{- if .Values.images.sentry.imagePullSecrets }}
       imagePullSecrets:
 {{ toYaml .Values.images.sentry.imagePullSecrets | indent 8 }}
       {{- end }}
       containers:
-      - name: {{ .Chart.Name }}-post-process-forward
+      - name: {{ .Chart.Name }}-subscription-consumer-transactions
         image: "{{ template "sentry.image" . }}"
         imagePullPolicy: {{ default "IfNotPresent" .Values.images.sentry.pullPolicy }}
         command:
-          - "sentry"
-          - "run"
-          - "post-process-forwarder"
-          - "--commit-batch-size"
-          - "{{ default "1" .Values.sentry.postProcessForward.commitBatchSize }}"
-          {{- if and (not .Values.kafka.enabled) }}
-          {{- if .Values.externalKafka.topics.commitLog }}
-          - "--commit-log-topic"
-          - "{{ .Values.externalKafka.topics.commitLog }}"
-          {{- end }}
-          {{- with .Values.externalKafka.consumerGroups }}
-          {{- if .Values.sentry.postProcess }}
-          - "--consumer-group"
-          - "{{ .postProcessor }}"
-          {{- end }}
-          {{- if .eventsSubscriptions }}
-          - "--synchronize-commit-group"
-          - "{{ .eventsSubscriptions }}"
-          {{- end }}
-          {{- end }}
+          - run
+          - query-subscription-consumer
+          - --commit-batch-size "{{ default '1' .Values.sentry.subscriptionConsumerTransactions.commitBatchSize }}"
+          {{- if and (not .Values.kafka.enabled) .Values.externalKafka.topics.transactionsSubscriptionResults }}
+          - --topic "{{ .Values.externalKafka.topics.transactionsSubscriptionResults }}"
           {{- end }}
         env:
         - name: SNUBA
-          value: http://{{ template "sentry.fullname" . }}-snuba:{{ template "snuba.port" }}
+          value: {{ template "snuba.api" . }}
+        - name: SENTRY_LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: {{ template "sentry.fullname" . }}-sentry
+              key: sentryLogLevel
         {{- if .Values.postgresql.enabled }}
         - name: POSTGRES_PASSWORD
           valueFrom:
@@ -93,8 +83,8 @@ spec:
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: /var/run/secrets/google/{{ .Values.filestore.gcs.credentialsFile }}
         {{ end }}
-{{- if .Values.sentry.postProcessForward.env }}
-{{ toYaml .Values.sentry.postProcessForward.env | indent 8 }}
+{{- if .Values.sentry.subscriptionConsumerTransactions.env }}
+{{ toYaml .Values.sentry.subscriptionConsumerTransactions.env | indent 8 }}
 {{- end }}
         volumeMounts:
         - mountPath: /etc/sentry
@@ -107,7 +97,7 @@ spec:
           mountPath: /var/run/secrets/google
         {{ end }}
         resources:
-{{ toYaml .Values.sentry.postProcessForward.resources | indent 12 }}
+{{ toYaml .Values.sentry.subscriptionConsumerTransactions.resources | indent 12 }}
       volumes:
       - name: config
         configMap:
@@ -124,6 +114,6 @@ spec:
         secret:
           secretName: {{ .Values.filestore.gcs.secretName }}
       {{ end }}
-      {{- if .Values.sentry.postProcessForward.priorityClassName }}
-      priorityClassName: "{{ .Values.sentry.postProcessForward.priorityClassName }}"
+      {{- if .Values.sentry.subscriptionConsumerTransactions.priorityClassName }}
+      priorityClassName: "{{ .Values.sentry.subscriptionConsumerTransactions.priorityClassName }}"
       {{- end }}

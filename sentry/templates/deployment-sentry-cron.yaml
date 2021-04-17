@@ -52,13 +52,17 @@ spec:
       - name: {{ .Chart.Name }}-cron
         image: "{{ template "sentry.image" . }}"
         imagePullPolicy: {{ default "IfNotPresent" .Values.images.sentry.pullPolicy }}
-        command: ["sentry"]
-        args:
+        command:
           - "run"
           - "cron"
         env:
         - name: SNUBA
-          value: http://{{ template "sentry.fullname" . }}-snuba:{{ template "snuba.port" }}
+          value: {{ template "snuba.api" . }}
+        - name: SENTRY_LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: {{ template "sentry.fullname" . }}-sentry
+              key: sentryLogLevel
         - name: C_FORCE_ROOT
           value: "true"
         {{- if .Values.postgresql.enabled }}

@@ -53,8 +53,7 @@ spec:
       - name: {{ .Chart.Name }}-worker
         image: "{{ template "sentry.image" . }}"
         imagePullPolicy: {{ default "IfNotPresent" .Values.images.sentry.pullPolicy }}
-        command: ["sentry"]
-        args:
+        command:
           - "run"
           - "worker"
           {{- if .Values.sentry.worker.concurrency }}
@@ -63,9 +62,14 @@ spec:
           {{- end }}
         env:
         - name: SNUBA
-          value: http://{{ template "sentry.fullname" . }}-snuba:{{ template "snuba.port" }}
+          value: {{ template "snuba.api" . }}
         - name: C_FORCE_ROOT
           value: "true"
+        - name: SENTRY_LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: {{ template "sentry.fullname" . }}-sentry
+              key: sentryLogLevel
         {{- if .Values.postgresql.enabled }}
         - name: POSTGRES_PASSWORD
           valueFrom:

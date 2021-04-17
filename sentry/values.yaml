@@ -52,6 +52,8 @@ relay:
 
 sentry:
   singleOrganization: true
+  logging:
+    level: INFO
   web:
     # if using filestore backend filesystem with RWO access, set strategyType to Recreate
     strategyType: RollingUpdate
@@ -61,6 +63,7 @@ sentry:
     resources: {}
     affinity: {}
     nodeSelector: {}
+    workers: 4
     # tolerations: []
     # podLabels: []
     # Mount and use custom CA
@@ -144,6 +147,15 @@ sentry:
     enabled: true
     schedule: "0 0 * * *"
     days: 90
+  subscriptionConsumerTransactions:
+    replicas: 1
+    env: []
+    resources: {}
+    affinity: {}
+    nodeSelector: {}
+    # tolerations: []
+    # podLabels: []
+    # commitBatchSize: 1
 
 snuba:
   api:
@@ -469,6 +481,10 @@ externalKafka:
   #   ingestSessions: ""
   #   outcomes: ""
   #   eventsSubscriptionResults: ""
+  #   transactionsSubscriptionResults: ""
+  #   replacement: ""
+  #   comitLog: ""
+  #   consumerGroups:
 
 redis:
   enabled: true
