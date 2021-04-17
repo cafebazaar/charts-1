@@ -63,11 +63,7 @@ spec:
           {{- end }}
         env:
         - name: SNUBA
-          {{- if .Values.snuba.api.address }}
-          value: {{ .Values.snuba.api.address }}
-          {{- else }}
-          value: http://{{ template "sentry.fullname" . }}-snuba:{{ template "snuba.port" }}
-          {{- end }}
+          value: {{ template "snuba.api" . }}
         - name: C_FORCE_ROOT
           value: "true"
         - name: SENTRY_LOG_LEVEL
