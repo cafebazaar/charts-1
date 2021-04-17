@@ -487,6 +487,7 @@ externalKafka:
   # consumerGroups:
   #   eventConsumer: ""
   #   outcomesCunsumer: ""
+  #   replacers: ""
 
 redis:
   enabled: true
