@@ -489,6 +489,7 @@ externalKafka:
   #   outcomesCunsumer: ""
   #   replacers: ""
   #   sessionConsumer: ""
+  #   transactionConsumer: ""
 
 redis:
   enabled: true
