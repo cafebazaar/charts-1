@@ -55,7 +55,8 @@ spec:
       - name: {{ .Chart.Name }}-web
         image: "{{ template "sentry.image" . }}"
         imagePullPolicy: {{ default "IfNotPresent" .Values.images.sentry.pullPolicy }}
-        command:
+        command: ["sentry"]
+        args:
           - run
           - web
           {{- if .Values.sentry.web.workers }}
