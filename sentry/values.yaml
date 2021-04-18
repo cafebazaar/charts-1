@@ -484,7 +484,9 @@ externalKafka:
   #   transactionsSubscriptionResults: ""
   #   replacement: ""
   #   comitLog: ""
-  #   consumerGroups:
+  # consumerGroups:
+  #   transactionsGroup: ""
+  #   snubaTransactionsSubscriptionsConsumers: ""
 
 redis:
   enabled: true
