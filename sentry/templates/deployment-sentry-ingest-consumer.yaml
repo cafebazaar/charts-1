@@ -62,8 +62,8 @@ spec:
       - name: {{ .Chart.Name }}-ingest-consumer
         image: "{{ template "sentry.image" . }}"
         imagePullPolicy: {{ default "IfNotPresent" .Values.images.sentry.pullPolicy }}
-        command:
-          - "sentry"
+        command: ["sentry"]
+        args:
           - "run"
           - "ingest-consumer"
           - "--all-consumer-types"

@@ -487,6 +487,11 @@ externalKafka:
   # consumerGroups:
   #   transactionsGroup: ""
   #   snubaTransactionsSubscriptionsConsumers: ""
+  #   eventConsumer: ""
+  #   outcomesCunsumer: ""
+  #   replacers: ""
+  #   sessionConsumer: ""
+  #   transactionConsumer: ""
 
 redis:
   enabled: true
