@@ -485,6 +485,8 @@ externalKafka:
   #   replacement: ""
   #   comitLog: ""
   # consumerGroups:
+  #   transactionsGroup: ""
+  #   snubaTransactionsSubscriptionsConsumers: ""
   #   eventConsumer: ""
   #   outcomesCunsumer: ""
   #   replacers: ""
