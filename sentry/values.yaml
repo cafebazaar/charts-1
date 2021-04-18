@@ -494,6 +494,7 @@ externalKafka:
   #   transactionsSubscriptionResults: ""
   #   replacement: ""
   #   comitLog: ""
+  #   sentryEvents: ""
   # consumerGroups:
   #   ingestConsumer: ""
   #   postProcessor: ""

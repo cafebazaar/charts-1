@@ -67,7 +67,7 @@ spec:
           - --dataset=events
           {{- if and (not .Values.kafka.enabled) .Values.externalKafka.topics }}
           {{- with .Values.externalKafka.topics }}
-          - --topic=cafebazaar.sentry_events
+          - --topic={{ .sentryEvents }}
           - --result-topic={{ .eventsSubscriptionResults }}
           - --commit-log-topic={{ .comitLogs }}
           {{- end }}
