@@ -57,7 +57,8 @@ spec:
       - name: {{ .Chart.Name }}-subscription-consumer-transactions
         image: "{{ template "sentry.image" . }}"
         imagePullPolicy: {{ default "IfNotPresent" .Values.images.sentry.pullPolicy }}
-        command:
+        command: ["sentry"]
+        args:
           - run
           - query-subscription-consumer
           - --commit-batch-size "{{ default '1' .Values.sentry.subscriptionConsumerTransactions.commitBatchSize }}"
