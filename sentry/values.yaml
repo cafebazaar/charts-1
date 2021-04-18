@@ -499,7 +499,14 @@ externalKafka:
   #   ingestConsumer: ""
   #   postProcessor: ""
   #   snubaConsumer: ""
+  #   transactionsGroup: ""
+  #   snubaTransactionsSubscriptionsConsumers: ""
   #   snubaEventsSubscriptionsConsumers: ""
+  #   eventConsumer: ""
+  #   outcomesCunsumer: ""
+  #   replacers: ""
+  #   sessionConsumer: ""
+  #   transactionConsumer: ""
 
 redis:
   enabled: true
