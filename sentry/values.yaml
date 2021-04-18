@@ -219,6 +219,16 @@ snuba:
     # tolerations: []
     # podLabels: []
 
+  subscriptionConsumerEvents:
+    replicas: 1
+    env: []
+    resources: {}
+    affinity: {}
+    nodeSelector: {}
+    # tolerations: []
+    # podLabels: []
+
+
   dbInitJob:
     env: []
 
@@ -484,7 +494,11 @@ externalKafka:
   #   transactionsSubscriptionResults: ""
   #   replacement: ""
   #   comitLog: ""
-  #   consumerGroups:
+  # consumerGroups:
+  #   ingestConsumer: ""
+  #   postProcessor: ""
+  #   snubaConsumer: ""
+  #   snubaEventsSubscriptionsConsumers: ""
 
 redis:
   enabled: true
