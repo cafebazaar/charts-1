@@ -194,6 +194,28 @@ data:
     #     }
     # }
 
+    CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        {{- if $redisPass }}
+        "LOCATION": ["redis://:{{ $redisPass }}@{{ $redisHost }}:{{ $redisPort }}/0"],
+        {{- else }}
+        "LOCATION": ["redis://{{ $redisHost }}:{{ $redisPort }}"],
+        {{- end }}
+        "TIMEOUT": 3600,
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'SOCKET_CONNECT_TIMEOUT': 0.3,  # in seconds
+            'SOCKET_TIMEOUT': 0.3,  # in seconds
+            'IGNORE_EXCEPTIONS': True,
+            'CONNECTION_POOL_KWARGS': {
+                'max_connections': 100,
+                'socket_keepalive': 15,
+            }
+        },
+      }
+    }
+
     # A primary cache is required for things such as processing events
     SENTRY_CACHE = "sentry.cache.redis.RedisCache"
 
