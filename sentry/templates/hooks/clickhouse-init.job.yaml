@@ -1,4 +1,4 @@
-{{- if .Values.hooks.enabled -}}
+{{- if and .Values.hooks.enabled .Values.externalKafka.clusterName -}}
 {{- $clickhouseHost := include "sentry.clickhouse.host" . -}}
 {{- $clickhousePort := include "sentry.clickhouse.port" . -}}
 {{- $clickhouseClusterName := include "sentry.clickhouse.cluster.name" . -}}
