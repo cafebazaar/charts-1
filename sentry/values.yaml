@@ -494,20 +494,17 @@ externalKafka:
   #   eventsSubscriptionResults: ""
   #   transactionsSubscriptionResults: ""
   #   replacement: ""
-  #   comitLog: ""
+  #   commitLog: ""
   #   sentryEvents: ""
   # consumerGroups:
+  #   commitLog: ""
+  #   transactionCommitLog: ""
+  #   sentrySubscription: ""
   #   ingestConsumer: ""
   #   postProcessor: ""
-  #   snubaConsumer: ""
-  #   transactionsGroup: ""
+  #   replacers: ""
   #   snubaTransactionsSubscriptionsConsumers: ""
   #   snubaEventsSubscriptionsConsumers: ""
-  #   eventConsumer: ""
-  #   outcomesCunsumer: ""
-  #   replacers: ""
-  #   sessionConsumer: ""
-  #   transactionConsumer: ""
 
 redis:
   enabled: true

@@ -70,13 +70,13 @@ spec:
           {{- with .Values.externalKafka.topics }}
           - --topic={{ .sentryEvents }}
           - --result-topic={{ .eventsSubscriptionResults }}
-          - --commit-log-topic={{ .comitLogs }}
+          - --commit-log-topic={{ .commitLog }}
           {{- end }}
           {{- end }}
           {{- if and (not .Values.kafka.enabled) .Values.externalKafka.consumerGroups }}
           {{- with .Values.externalKafka.consumerGroups }}
           - --consumer-group={{ .snubaEventsSubscriptionsConsumers }}
-          - --commit-log-group={{ .snubaConsumers }}
+          - --commit-log-group={{ .commitLog }}
           {{- end }}
           {{- end }}
         ports:

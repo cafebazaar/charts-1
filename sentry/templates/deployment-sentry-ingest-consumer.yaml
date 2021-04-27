@@ -73,7 +73,7 @@ spec:
           {{- end }}
           {{- if and (not .Values.kafka.enabled) .Values.externalKafka.consumerGroups }}
           - "--consumer-group"
-          - "{{ .Values.externalKafka.consumerGroups.ingest }}"
+          - "{{ .Values.externalKafka.consumerGroups.ingestConsumer }}"
           {{- end }}
         env:
         - name: SNUBA

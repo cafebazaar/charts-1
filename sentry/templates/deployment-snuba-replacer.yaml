@@ -70,7 +70,7 @@ spec:
         {{- if and (not .Values.kafka.enabled) .Values.externalKafka.topics }}
         {{- with .Values.externalKafka.topics }}
         - --replacements-topic
-        - {{ replacement | quote }}
+        - {{ .replacement | quote }}
         {{- end }}
         - --consumer-group
         - {{ .Values.externalKafka.consumerGroups.replacers | quote }}
