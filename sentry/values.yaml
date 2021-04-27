@@ -53,6 +53,7 @@ relay:
 sentry:
   singleOrganization: true
   eventRetentionDays: 14
+  beacon: false
   logging:
     level: INFO
   web:

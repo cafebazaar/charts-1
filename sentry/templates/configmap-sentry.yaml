@@ -161,6 +161,8 @@ data:
 
     SENTRY_OPTIONS["system.event-retention-days"] = int(env('SENTRY_EVENT_RETENTION_DAYS') or {{ .Values.sentry.eventRetentionDays }} )
 
+    SENTRY_BEACON = {{ .Values.sentry.beacon | ternary "True" "False" }}
+
     #########
     # Queue #
     #########
