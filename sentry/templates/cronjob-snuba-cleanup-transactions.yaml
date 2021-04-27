@@ -1,16 +1,15 @@
-{{- $redisPass := include "sentry.redis.password" . -}}
-{{- if .Values.snuba.transactionsCleanup.enabled }}
+{{- if .Values.snuba.cleanupTransactions.enabled }}
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
-  name: {{ template "sentry.fullname" . }}-snuba-transactions-cleanup
+  name: {{ template "sentry.fullname" . }}-snuba-cleanup-transactions
   labels:
     app: {{ template "sentry.fullname" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
 spec:
-  schedule: "{{ .Values.snuba.transactionsCleanup.schedule }}"
+  schedule: "{{ .Values.snuba.cleanupTransactions.schedule }}"
   jobTemplate:
     spec:
       template:
@@ -18,38 +17,36 @@ spec:
           annotations:
             checksum/snubaSettingsPy: {{ .Values.config.snubaSettingsPy | sha256sum }}
             checksum/config.yaml: {{ include (print $.Template.BasePath "/configmap-snuba.yaml") . | sha256sum }}
-        {{- if .Values.snuba.transactionsCleanup.annotations }}
-{{ toYaml .Values.snuba.transactionsCleanup.annotations | indent 12 }}
-        {{- end }}
+            {{- if .Values.snuba.cleanupTransactions.annotations }}
+{{ toYaml .Values.snuba.cleanupTransactions.annotations | indent 12 }}
+            {{- end }}
           labels:
             app: {{ template "sentry.fullname" . }}
             release: "{{ .Release.Name }}"
-            {{- if .Values.snuba.transactionsCleanup.podLabels }}
-{{ toYaml .Values.snuba.transactionsCleanup.podLabels | indent 12 }}
+            {{- if .Values.snuba.cleanupTransactions.podLabels }}
+{{ toYaml .Values.snuba.cleanupTransactions.podLabels | indent 12 }}
             {{- end }}
         spec:
           affinity:
-            {{- if .Values.snuba.transactionsCleanup.affinity }}
-{{ toYaml .Values.snuba.transactionsCleanup.affinity | indent 12 }}
+            {{- if .Values.snuba.cleanupTransactions.affinity }}
+{{ toYaml .Values.snuba.cleanupTransactions.affinity | indent 12 }}
             {{- end }}
-            {{- if .Values.snuba.transactionsCleanup.nodeSelector }}
+            {{- if .Values.snuba.cleanupTransactions.nodeSelector }}
           nodeSelector:
-{{ toYaml .Values.snuba.transactionsCleanup.nodeSelector | indent 12 }}
+{{ toYaml .Values.snuba.cleanupTransactions.nodeSelector | indent 12 }}
             {{- end }}
-            {{- if .Values.snuba.transactionsCleanup.tolerations }}
+            {{- if .Values.snuba.cleanupTransactions.tolerations }}
           tolerations:
-{{ toYaml .Values.snuba.transactionsCleanup.tolerations | indent 12 }}
+{{ toYaml .Values.snuba.cleanupTransactions.tolerations | indent 12 }}
             {{- end }}
             {{- if .Values.images.snuba.imagePullSecrets }}
           imagePullSecrets:
 {{ toYaml .Values.images.snuba.imagePullSecrets | indent 12 }}
             {{- end }}
-          restartPolicy: Never
           containers:
-          - name: {{ .Chart.Name }}-snuba-transactions-cleanup
+          - name: {{ .Chart.Name }}-snuba-cleanup-errors
             image: "{{ template "snuba.image" . }}"
             imagePullPolicy: {{ default "IfNotPresent" .Values.images.snuba.pullPolicy }}
-            command: ["snuba"]
             args:
               - cleanup
               - --storage
@@ -81,22 +78,30 @@ spec:
                 value: {{ include "sentry.redis.host" . | quote }}
               - name: REDIS_PORT
                 value: {{ include "sentry.redis.port" . | quote }}
-              {{- if $redisPass }}
-              - name: REDIS_PASSWORD
-                value: {{ $redisPass | quote }}
-              {{- end }}
-{{- if .Values.snuba.transactionsCleanup.env }}
-{{ toYaml .Values.snuba.transactionsCleanup.env | indent 8 }}
+{{- if .Values.snuba.cleanupTransactions.env }}
+{{ toYaml .Values.snuba.cleanupTransactions.env | indent 12 }}
 {{- end }}
+            envFrom:
+                - secretRef:
+                      name: {{ template "sentry.fullname" . }}-snuba-env
             volumeMounts:
-            - mountPath: /etc/snuba
-              name: config
-              readOnly: true
+                - mountPath: /etc/snuba
+                  name: config
+                  readOnly: true
             resources:
-{{ toYaml .Values.snuba.transactionsCleanup.resources | indent 14 }}
+{{ toYaml .Values.snuba.cleanupTransactions.resources | indent 14 }}
+{{- if .Values.snuba.cleanupTransactions.sidecars }}
+{{ toYaml .Values.snuba.cleanupTransactions.sidecars | indent 10 }}
+{{- end }}
+          restartPolicy: Never
           volumes:
             - name: config
               configMap:
                 name: {{ template "sentry.fullname" . }}-snuba
-
+{{- if .Values.snuba.cleanupTransactions.volumes }}
+{{ toYaml .Values.snuba.cleanupTransactions.volumes | indent 10 }}
+{{- end }}
+          {{- if .Values.snuba.cleanupTransactions.priorityClassName }}
+          priorityClassName: "{{ .Values.snuba.cleanupTransactions.priorityClassName }}"
+          {{- end }}
 {{- end }}

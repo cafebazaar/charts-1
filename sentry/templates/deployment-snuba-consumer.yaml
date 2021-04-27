@@ -1,4 +1,3 @@
-{{- $redisPass := include "sentry.redis.password" . -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -18,6 +17,7 @@ metadata:
     "helm.sh/hook-weight": "10"
   {{- end }}
 spec:
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
   selector:
     matchLabels:
         app: {{ template "sentry.fullname" . }}
@@ -107,13 +107,12 @@ spec:
           value: {{ include "sentry.redis.host" . | quote }}
         - name: REDIS_PORT
           value: {{ include "sentry.redis.port" . | quote }}
-        {{- if $redisPass }}
-        - name: REDIS_PASSWORD
-          value: {{ $redisPass | quote }}
-        {{- end }}
 {{- if .Values.snuba.consumer.env }}
 {{ toYaml .Values.snuba.consumer.env | indent 8 }}
 {{- end }}
+        envFrom:
+        - secretRef:
+            name: {{ template "sentry.fullname" . }}-snuba-env
         volumeMounts:
         - mountPath: /etc/snuba
           name: config

@@ -49,6 +49,8 @@ relay:
     minReplicas: 2
     maxReplicas: 5
     targetCPUUtilizationPercentage: 50
+  sidecars: [ ]
+  volumes: [ ]
 
 sentry:
   singleOrganization: true
@@ -85,6 +87,8 @@ sentry:
       minReplicas: 2
       maxReplicas: 5
       targetCPUUtilizationPercentage: 50
+    sidecars: [ ]
+    volumes: [ ]
 
   worker:
     replicas: 3
@@ -103,6 +107,8 @@ sentry:
       minReplicas: 2
       maxReplicas: 5
       targetCPUUtilizationPercentage: 50
+    sidecars: [ ]
+    volumes: [ ]
 
   ingestConsumer:
     replicas: 1
@@ -121,6 +127,8 @@ sentry:
       minReplicas: 1
       maxReplicas: 3
       targetCPUUtilizationPercentage: 50
+    sidecars: [ ]
+    volumes: [ ]
 
   cron:
     replicas: 1
@@ -130,7 +138,9 @@ sentry:
     nodeSelector: {}
     # tolerations: []
     # podLabels: []
-
+    sidecars: [ ]
+    volumes: [ ]
+    
   postProcessForward:
     replicas: 1
     env: []
@@ -140,6 +150,8 @@ sentry:
     # tolerations: []
     # podLabels: []
     # commitBatchSize: 1
+    sidecars: [ ]
+    volumes: [ ]
 
   subscriptionConsumerEvents:
     replicas: 1
@@ -150,11 +162,15 @@ sentry:
     # tolerations: []
     # podLabels: []
     # commitBatchSize: 1
-
+    sidecars: [ ]
+    volumes: [ ]
+    
   cleanup:
     enabled: true
     resources: {}
     schedule: "0 0 * * *"
+    sidecars: []
+    volumes: []
 
   subscriptionConsumerTransactions:
     replicas: 1
@@ -165,6 +181,9 @@ sentry:
     # tolerations: []
     # podLabels: []
     # commitBatchSize: 1
+    sidecars: [ ]
+    volumes: [ ]
+
 
 snuba:
   logging:
@@ -184,6 +203,8 @@ snuba:
       minReplicas: 2
       maxReplicas: 5
       targetCPUUtilizationPercentage: 50
+    sidecars: [ ]
+    volumes: [ ]
 
   consumer:
     replicas: 1
@@ -258,29 +279,55 @@ snuba:
     resources: {}
     schedule: "0 0 * * *"
 
+  cleanupErrors:
+    enabled: true
+    schedule: "0 * * * *"
+    sidecars: []
+    volumes: []
+
+  cleanupTransactions:
+    enabled: true
+    schedule: "0 * * * *"
+    sidecars: []
+    volumes: []
 
 hooks:
   enabled: true
   removeOnSuccess: true
+  clickhouseInit:
+    podAnnotations: {}
+
   dbCheck:
+    image:
+      # repository: subfuzion/netcat
+      # tag: latest
+      # pullPolicy: IfNotPresent
+      imagePullSecrets: []
     env: []
+    podAnnotations: {}
     resources:
       limits:
         memory: 64Mi
       requests:
         cpu: 100m
         memory: 64Mi
+
   dbInit:
     env: []
+    podAnnotations: {}
     resources:
       limits:
         memory: 2048Mi
       requests:
         cpu: 300m
         memory: 2048Mi
+    sidecars: [ ]
+    volumes: [ ]
+
   snubaInit:
     env: []
     kafka: false
+    podAnnotations: {}
     resources:
       limits:
         cpu: 2000m
@@ -322,10 +369,31 @@ symbolicator:
     # tolerations: []
     # podLabels: []
     # priorityClassName: "xxx"
-    logging:
-      level: warn
-    sentryDsn: https://ed2e75a1f57e44718e220b8a672a48fa@sentry.cafebazaar.org/256
 
+    config: |-
+      # See: https://getsentry.github.io/symbolicator/#configuration
+      cache_dir: "/data"
+      bind: "0.0.0.0:3021"
+      logging:
+        level: "warn"
+      metrics:
+        statsd: bazaar-sentry-metrics:9125
+        prefix: "symbolicator"
+      sentry_dsn: https://ed2e75a1f57e44718e220b8a672a48fa@sentry.cafebazaar.org/256
+      connect_to_reserved_ips: true
+      # caches:
+      #   downloaded:
+      #     max_unused_for: 1w
+      #     retry_misses_after: 5m
+      #     retry_malformed_after: 5m
+      #   derived:
+      #     max_unused_for: 1w
+      #     retry_misses_after: 5m
+      #     retry_malformed_after: 5m
+      #   diagnostics:
+      #     retention: 1w
+
+    # TODO autoscaling in not yet implemented
     autoscaling:
       enabled: false
       minReplicas: 2
@@ -381,6 +449,7 @@ nginx:
 ingress:
   enabled: false
   # If you are using traefik ingress controller, switch this to 'traefik'
+  # if you are using AWS ALB Ingress controller, switch this to 'aws-alb'
   regexPathStyle: nginx
   # annotations:
   #   If you are using nginx ingress controller, please use at least those 2 annotations
@@ -463,6 +532,18 @@ clickhouse:
         replica:
           backup:
             enabled: false
+      users:
+        enabled: false
+        user:
+        # the first user will be used if enabled
+        - name: default
+          config:
+            password: ""
+            networks:
+            - ::/0
+            profile: default
+            quota: default
+
     persistentVolumeClaim:
       enabled: true
       dataPersistentVolume:
@@ -478,6 +559,9 @@ externalClickhouse:
   ##
   host: "clickhouse"
   tcpPort: 9000
+  username: default
+  password: ""
+  database: default
   ## Cluster name, can be found in config
   ## (https://clickhouse.tech/docs/en/operations/server-configuration-parameters/settings/#server-settings-remote-servers)
   ## or by executing `select * from system.clusters`
@@ -576,7 +660,9 @@ externalPostgresql:
 rabbitmq:
   ## If disabled, Redis will be used instead as the broker.
   enabled: true
-  forceBoot: true
+  clustering:
+    forceBoot: true
+    rebalance: true
   replicaCount: 3
   auth:
     erlangCookie: pHgpy3Q6adTskzAT6bLHCFqFTF7lMxhA
@@ -584,27 +670,58 @@ rabbitmq:
     password: guest
   nameOverride: ""
 
-  podDisruptionBudget:
-    minAvailable: 1
-
-  persistentVolume:
+  pdb:
+    create: true
+  persistence:
     enabled: true
   resources: {}
-  # rabbitmqMemoryHighWatermark: 600MB
-  # rabbitmqMemoryHighWatermarkType: absolute
+  memoryHighWatermark: {}
+    # enabled: true
+    # type: relative
+    # value: 0.4
 
-  definitions:
-    policies: |-
-     {
-       "name": "ha-all",
-       "pattern": "^((?!celeryev.*).)*$",
-       "vhost": "/",
-       "definition": {
-         "ha-mode": "all",
-         "ha-sync-mode": "automatic",
-         "ha-sync-batch-size": 1
-       }
-     }
+  extraSecrets:
+    load-definition:
+      load_definition.json: |
+        {
+          "users": [
+            {
+              "name": "{{ .Values.auth.username }}",
+              "password": "{{ .Values.auth.password }}",
+              "tags": "administrator"
+            }
+          ],
+          "permissions": [{
+            "user": "{{ .Values.auth.username }}",
+            "vhost": "/",
+            "configure": ".*",
+            "write": ".*",
+            "read": ".*"
+          }],
+          "policies": [
+            {
+              "name": "ha-all",
+              "pattern": ".*",
+              "vhost": "/",
+              "definition": {
+                "ha-mode": "all",
+                "ha-sync-mode": "automatic",
+                "ha-sync-batch-size": 1
+              }
+            }
+          ],
+          "vhosts": [
+            {
+              "name": "/"
+            }
+          ]
+        }
+  loadDefinition:
+    enabled: true
+    existingSecret: load-definition
+  extraConfiguration: |
+    load_definitions = /app/load_definition.json
+
 
 ## Prometheus Exporter / Metrics
 ##
@@ -665,3 +782,5 @@ metrics:
     #   any: true
     scrapeInterval: 30s
     # honorLabels: true
+
+revisionHistoryLimit: 10

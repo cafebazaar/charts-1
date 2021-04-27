@@ -9,16 +9,5 @@ metadata:
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
 data:
-  config.yml: |-
-    # See: https://getsentry.github.io/symbolicator/#configuration
-    cache_dir: "/data"
-    bind: "0.0.0.0:{{ template "symbolicator.port" }}"
-    logging:
-      level: "{{ .Values.symbolicator.api.logging.level }}"
-    {{- if .Values.metrics.enabled }}
-    metrics:
-      statsd: {{ template "sentry.fullname" . }}-metrics:9125
-      prefix: sentry.symbolicator
-    {{- end}}
-    sentry_dsn: {{ .Values.symbolicator.api.sentryDsn }}
+  config.yml: {{ toYaml .Values.symbolicator.api.config | indent 2 }}
 {{- end }}
