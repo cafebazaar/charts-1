@@ -52,7 +52,7 @@ spec:
       - name: {{ .Chart.Name }}-cron
         image: "{{ template "sentry.image" . }}"
         imagePullPolicy: {{ default "IfNotPresent" .Values.images.sentry.pullPolicy }}
-        command:
+        args:
           - "run"
           - "cron"
         env:
