@@ -481,7 +481,7 @@ externalClickhouse:
   ## Cluster name, can be found in config
   ## (https://clickhouse.tech/docs/en/operations/server-configuration-parameters/settings/#server-settings-remote-servers)
   ## or by executing `select * from system.clusters`
-  ## comment out to use a single node clickhouse server.
+  ## comment out to use clustered clickhouse server.
   # clusterName: test_shard_localhost
 
 # Settings for Kafka.
