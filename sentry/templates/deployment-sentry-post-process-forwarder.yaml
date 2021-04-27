@@ -97,6 +97,9 @@ spec:
 {{- if .Values.sentry.postProcessForward.env }}
 {{ toYaml .Values.sentry.postProcessForward.env | indent 8 }}
 {{- end }}
+        envFrom:
+        - secretRef:
+            name: {{ template "sentry.fullname" . }}-sentry-env
         volumeMounts:
         - mountPath: /etc/sentry
           name: config

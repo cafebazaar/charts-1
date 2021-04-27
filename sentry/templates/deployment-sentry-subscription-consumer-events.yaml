@@ -86,6 +86,9 @@ spec:
 {{- if .Values.sentry.subscriptionConsumerEvents.env }}
 {{ toYaml .Values.sentry.subscriptionConsumerEvents.env | indent 8 }}
 {{- end }}
+        envFrom:
+        - secretRef:
+            name: {{ template "sentry.fullname" . }}-sentry-env
         volumeMounts:
         - mountPath: /etc/sentry
           name: config

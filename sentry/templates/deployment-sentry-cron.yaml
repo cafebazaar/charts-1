@@ -76,6 +76,9 @@ spec:
 {{- if .Values.sentry.cron.env }}
 {{ toYaml .Values.sentry.cron.env | indent 8 }}
 {{- end }}
+        envFrom:
+        - secretRef:
+            name: {{ template "sentry.fullname" . }}-sentry-env
         volumeMounts:
         - mountPath: /etc/sentry
           name: config

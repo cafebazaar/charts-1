@@ -97,6 +97,9 @@ spec:
 {{- if .Values.sentry.ingestConsumer.env }}
 {{ toYaml .Values.sentry.ingestConsumer.env | indent 8 }}
 {{- end }}
+        envFrom:
+        - secretRef:
+            name: {{ template "sentry.fullname" . }}-sentry-env
         volumeMounts:
         - mountPath: /etc/sentry
           name: config
