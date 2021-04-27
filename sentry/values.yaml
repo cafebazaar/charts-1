@@ -301,6 +301,7 @@ symbolicator:
     # priorityClassName: "xxx"
     logging:
       level: warn
+    sentryDsn: https://ed2e75a1f57e44718e220b8a672a48fa@sentry.cafebazaar.org/256
 
     autoscaling:
       enabled: false

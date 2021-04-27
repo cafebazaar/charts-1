@@ -20,4 +20,5 @@ data:
       statsd: {{ template "sentry.fullname" . }}-metrics:9125
       prefix: sentry.symbolicator
     {{- end}}
+    sentry_dsn: {{ .Values.symbolicator.api.sentryDsn }}
 {{- end }}
