@@ -1,0 +1,102 @@
+{{- $redisPass := include "sentry.redis.password" . -}}
+{{- if .Values.snuba.cleanup.enabled }}
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: {{ template "sentry.fullname" . }}-snuba-cleanup
+  labels:
+    app: {{ template "sentry.fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+spec:
+  schedule: "{{ .Values.snuba.cleanup.schedule }}"
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          annotations:
+            checksum/snubaSettingsPy: {{ .Values.config.snubaSettingsPy | sha256sum }}
+            checksum/config.yaml: {{ include (print $.Template.BasePath "/configmap-snuba.yaml") . | sha256sum }}
+        {{- if .Values.snuba.cleanup.annotations }}
+{{ toYaml .Values.snuba.cleanup.annotations | indent 12 }}
+        {{- end }}
+          labels:
+            app: {{ template "sentry.fullname" . }}
+            release: "{{ .Release.Name }}"
+            {{- if .Values.snuba.cleanup.podLabels }}
+{{ toYaml .Values.snuba.cleanup.podLabels | indent 12 }}
+            {{- end }}
+        spec:
+          affinity:
+            {{- if .Values.snuba.cleanup.affinity }}
+{{ toYaml .Values.snuba.cleanup.affinity | indent 12 }}
+            {{- end }}
+            {{- if .Values.snuba.cleanup.nodeSelector }}
+          nodeSelector:
+{{ toYaml .Values.snuba.cleanup.nodeSelector | indent 12 }}
+            {{- end }}
+            {{- if .Values.snuba.cleanup.tolerations }}
+          tolerations:
+{{ toYaml .Values.snuba.cleanup.tolerations | indent 12 }}
+            {{- end }}
+            {{- if .Values.images.snuba.imagePullSecrets }}
+          imagePullSecrets:
+{{ toYaml .Values.images.snuba.imagePullSecrets | indent 12 }}
+            {{- end }}
+          restartPolicy: Never
+          containers:
+          - name: {{ .Chart.Name }}-snuba-cleanup
+            image: "{{ template "snuba.image" . }}"
+            imagePullPolicy: {{ default "IfNotPresent" .Values.images.snuba.pullPolicy }}
+            command: ["snuba"]
+            args:
+              - cleanup
+              - --storage
+              - errors
+              - --dry-run
+              - "False"
+              - --log-level
+              - {{ .Values.snuba.logging.level }}
+            env:
+              - name: SNUBA_SETTINGS
+                value: docker
+              - name: SENTRY_EVENT_RETENTION_DAYS
+                value: {{ .Values.sentry.eventRetentionDays | quote }}
+              - name: CLICKHOUSE_SINGLE_NODE
+                value: {{ if .Values.externalClickhouse.clusterName }}"false"{{ else }}"true"{{end}}
+              {{- if .Values.metrics.enabled }}
+              - name: DOGSTATSD_HOST
+                value: "{{ template "sentry.fullname" . }}-metrics"
+              - name: DOGSTATSD_PORT
+                value: "9125"
+              {{- end}}
+              - name: DEFAULT_BROKERS
+                value: {{ include "sentry.kafka.bootstrappers" . | quote }}
+              - name: SENTRY_DSN
+                value: {{ .Values.snuba.sentryDsn | quote }}
+              - name: CLICKHOUSE_HOST
+                value: {{ include "sentry.clickhouse.host" . | quote }}
+              - name: REDIS_HOST
+                value: {{ include "sentry.redis.host" . | quote }}
+              - name: REDIS_PORT
+                value: {{ include "sentry.redis.port" . | quote }}
+              {{- if $redisPass }}
+              - name: REDIS_PASSWORD
+                value: {{ $redisPass | quote }}
+              {{- end }}
+{{- if .Values.snuba.cleanup.env }}
+{{ toYaml .Values.snuba.cleanup.env | indent 8 }}
+{{- end }}
+            volumeMounts:
+            - mountPath: /etc/snuba
+              name: config
+              readOnly: true
+            resources:
+{{ toYaml .Values.snuba.cleanup.resources | indent 14 }}
+          volumes:
+            - name: config
+              configMap:
+                name: {{ template "sentry.fullname" . }}-snuba
+
+{{- end }}
