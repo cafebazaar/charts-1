@@ -130,6 +130,7 @@ sentry:
     nodeSelector: {}
     # tolerations: []
     # podLabels: []
+
   postProcessForward:
     replicas: 1
     env: []
@@ -139,6 +140,7 @@ sentry:
     # tolerations: []
     # podLabels: []
     # commitBatchSize: 1
+
   subscriptionConsumerEvents:
     replicas: 1
     env: []
@@ -148,8 +150,10 @@ sentry:
     # tolerations: []
     # podLabels: []
     # commitBatchSize: 1
+
   cleanup:
     enabled: true
+    resources: {}
     schedule: "0 0 * * *"
 
   subscriptionConsumerTransactions:
@@ -235,12 +239,24 @@ snuba:
     # tolerations: []
     # podLabels: []
 
-
-  dbInitJob:
+  subscriptionConsumerTransactions:
+    replicas: 1
     env: []
+    resources: {}
+    affinity: {}
+    nodeSelector: {}
+    # tolerations: []
+    # podLabels: []
 
-  migrateJob:
-    env: []
+  cleanup:
+    enabled: true
+    resources: {}
+    schedule: "0 0 * * *"
+
+  transactionsCleanup:
+    enabled: true
+    resources: {}
+    schedule: "0 0 * * *"
 
 
 hooks:
@@ -464,7 +480,7 @@ externalClickhouse:
   ## Cluster name, can be found in config
   ## (https://clickhouse.tech/docs/en/operations/server-configuration-parameters/settings/#server-settings-remote-servers)
   ## or by executing `select * from system.clusters`
-  ##
+  ## comment out to use a single node clickhouse server.
   # clusterName: test_shard_localhost
 
 # Settings for Kafka.
