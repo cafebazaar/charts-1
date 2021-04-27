@@ -96,7 +96,7 @@ spec:
           mountPath: /var/run/secrets/google
         {{ end }}
         resources:
-{{ toYaml .Values.sentry.worker.resources | indent 12 }}
+{{ toYaml .Values.sentry.worker.resources | indent 10 }}
       volumes:
       - name: config
         configMap:

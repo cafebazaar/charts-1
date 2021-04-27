@@ -114,7 +114,7 @@ spec:
             successThreshold: 1
             timeoutSeconds: 2
           resources:
-  {{ toYaml .Values.relay.resources | indent 10 }}
+{{ toYaml .Values.relay.resources | indent 12 }}
       volumes:
       - name: config
         configMap:

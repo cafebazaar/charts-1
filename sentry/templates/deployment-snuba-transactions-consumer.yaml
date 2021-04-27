@@ -94,7 +94,7 @@ spec:
           name: config
           readOnly: true
         resources:
-{{ toYaml .Values.snuba.transactionsConsumer.resources | indent 12 }}
+{{ toYaml .Values.snuba.transactionsConsumer.resources | indent 10 }}
       volumes:
         - name: config
           configMap:

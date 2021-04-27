@@ -97,7 +97,7 @@ spec:
           successThreshold: 1
           timeoutSeconds: 2
         resources:
-{{ toYaml .Values.symbolicator.api.resources | indent 12 }}
+{{ toYaml .Values.symbolicator.api.resources | indent 10 }}
       volumes:
       - name: config
         configMap:
