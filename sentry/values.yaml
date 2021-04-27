@@ -296,6 +296,7 @@ system:
   ## This should only be used if you’re installing Sentry behind your company’s firewall.
   public: false
   ## This will generate one for you (it's must be given upon updates)
+  #secretKey: "xx"
   ## This will disable or enable transaction recording of internal components
   transactionEvents:
     forceDisableInternalProject: false
@@ -649,7 +650,7 @@ metrics:
 
   image:
     repository: prom/statsd-exporter
-    tag: v0.17.0
+    tag: v0.20.0
     pullPolicy: IfNotPresent
 
   # Enable this if you're using https://github.com/coreos/prometheus-operator
