@@ -377,16 +377,20 @@ data:
     # Features #
     ############
 
+    
+    SENTRY_FEATURES["projects:sample-events"] = False
 
+    SENTRY_FEATURES["organizations:invite-members"] = {{ .Values.sentry.features.enableInvites | ternary "True" "False" }}
+    SENTRY_ENABLE_INVITES = {{ .Values.sentry.features.enableInvites | ternary "True" "False" }}
     SENTRY_FEATURES = {
-      "auth:register": {{ .Values.auth.register | ternary "True" "False" }}
+      "auth:register": {{ .Values.sentry.features.auth.register | ternary "True" "False" }}
     }
     SENTRY_FEATURES["projects:sample-events"] = False
     SENTRY_FEATURES.update(
         {
             feature: True
             for feature in (
-                {{- if not .Values.sentry.singleOrganization }}
+                {{ if not .Values.sentry.singleOrganization }}
                 "organizations:create",
                 {{ end -}}
 

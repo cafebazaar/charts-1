@@ -56,6 +56,13 @@ sentry:
   beacon: false
   logging:
     level: INFO
+  features:
+    orgSubdomains: false
+    vstsLimitedScopes: true
+    enableInvites: false
+    auth:
+      register: false
+
   web:
     # if using filestore backend filesystem with RWO access, set strategyType to Recreate
     strategyType: RollingUpdate
@@ -78,10 +85,6 @@ sentry:
       minReplicas: 2
       maxReplicas: 5
       targetCPUUtilizationPercentage: 50
-
-  features:
-    orgSubdomains: false
-    vstsLimitedScopes: true
 
   worker:
     replicas: 3
@@ -317,9 +320,6 @@ symbolicator:
     # podLabels: []
     # affinity: {}
     # env: []
-
-auth:
-  register: true
 
 service:
   name: sentry
