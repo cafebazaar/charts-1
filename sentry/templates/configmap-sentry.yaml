@@ -1,6 +1,7 @@
 {{- $redisHost := include "sentry.redis.host" . -}}
 {{- $redisPort := include "sentry.redis.port" . -}}
 {{- $redisPass := include "sentry.redis.password" . -}}
+{{- $kafkaBootstrappers := include "sentry.kafka.bootstrappers" . -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -192,8 +193,46 @@ data:
     # A primary cache is required for things such as processing events
     SENTRY_CACHE = "sentry.cache.redis.RedisCache"
 
+    {{ if and (not .Values.kafka.enabled) .Values.externalKafka.topics }}
+    {{- with .Values.externalKafka.topics }}
+
+    KAFKA_EVENTS = {{ .sentryEvents | quote }}
+    KAFKA_OUTCOMES = {{ .outcomes | quote }}
+    KAFKA_EVENTS_SUBSCRIPTIONS_RESULTS = {{ .eventsSubscriptionResults | quote }}
+    KAFKA_TRANSACTIONS_SUBSCRIPTIONS_RESULTS = {{ .transactionsSubscriptionResults | quote }}
+    KAFKA_SUBSCRIPTION_RESULT_TOPICS = {
+        "events": {{ .eventsSubscriptionResults | quote }},
+        "transactions": {{ .transactionsSubscriptionResults | quote }},
+    }
+    KAFKA_INGEST_EVENTS = {{ .ingestEvents | quote }}
+    KAFKA_INGEST_ATTACHMENTS = {{ .ingestAttachments | quote }}
+    KAFKA_INGEST_TRANSACTIONS = {{ .ingestTransactions | quote }}
+
+
+    KAFKA_TOPICS = {
+        KAFKA_EVENTS: {"cluster": "default", "topic": KAFKA_EVENTS},
+        KAFKA_OUTCOMES: {"cluster": "default", "topic": KAFKA_OUTCOMES},
+        KAFKA_EVENTS_SUBSCRIPTIONS_RESULTS: {
+            "cluster": "default",
+            "topic": KAFKA_EVENTS_SUBSCRIPTIONS_RESULTS,
+        },
+        KAFKA_TRANSACTIONS_SUBSCRIPTIONS_RESULTS: {
+            "cluster": "default",
+            "topic": KAFKA_TRANSACTIONS_SUBSCRIPTIONS_RESULTS,
+        },
+        # Topic for receiving simple events (error events without attachments) from Relay
+        KAFKA_INGEST_EVENTS: {"cluster": "default", "topic": KAFKA_INGEST_EVENTS},
+        # Topic for receiving 'complex' events (error events with attachments) from Relay
+        KAFKA_INGEST_ATTACHMENTS: {"cluster": "default", "topic": KAFKA_INGEST_ATTACHMENTS},
+        # Topic for receiving transaction events (APM events) from Relay
+        KAFKA_INGEST_TRANSACTIONS: {"cluster": "default", "topic": KAFKA_INGEST_TRANSACTIONS},
+    }
+
+    {{- end }}
+    {{- end }}
+
     DEFAULT_KAFKA_OPTIONS = {
-        "bootstrap.servers": {{ printf "%s:%s" (include "sentry.kafka.hosts" .) (include "sentry.kafka.port" .) | quote }},
+        "bootstrap.servers": "{{ $kafkaBootstrappers }}",
         "message.max.bytes": 50000000,
         "socket.timeout.ms": 1000,
     }
