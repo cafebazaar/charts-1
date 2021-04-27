@@ -159,6 +159,8 @@ sentry:
     # commitBatchSize: 1
 
 snuba:
+  logging:
+    level: INFO
   api:
     replicas: 1
     env: []

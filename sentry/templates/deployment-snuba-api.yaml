@@ -50,6 +50,10 @@ spec:
       {{- end }}
       containers:
       - name: {{ .Chart.Name }}-snuba
+        args:
+          - api
+          - --log-level
+          - {{ .Values.snuba.logging.level }}
         image: "{{ template "snuba.image" . }}"
         imagePullPolicy: {{ default "IfNotPresent" .Values.images.snuba.pullPolicy }}
         ports:

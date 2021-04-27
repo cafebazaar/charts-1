@@ -79,6 +79,8 @@ spec:
           - --commit-log-group={{ .transactionCommitLog }}
           {{- end }}
           {{- end }}
+          - --log-level
+          - {{ .Values.snuba.logging.level }}
         ports:
         - containerPort: {{ template "snuba.port" }}
         env:
