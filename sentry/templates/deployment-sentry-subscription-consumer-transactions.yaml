@@ -57,10 +57,10 @@ spec:
       - name: {{ .Chart.Name }}-subscription-consumer-transactions
         image: "{{ template "sentry.image" . }}"
         imagePullPolicy: {{ default "IfNotPresent" .Values.images.sentry.pullPolicy }}
-        command: ["sentry"]
         args:
           - run
           - query-subscription-consumer
+          - --commit-batch-size {{ default "1" .Values.sentry.subscriptionConsumerTransactions.commitBatchSize }}
           {{- if and (not .Values.kafka.enabled) .Values.externalKafka.topics }}
           - --topic {{ .Values.externalKafka.topics.transactionsSubscriptionResults }}
           {{- end }}
