@@ -276,7 +276,7 @@ Set ClickHouse cluster name
 {{- if .Values.clickhouse.enabled -}}
 {{ .Release.Name | printf "%s-clickhouse" }}
 {{- else -}}
-{{ required "A valid .Values.externalClickhouse.clusterName is required" .Values.externalClickhouse.clusterName }}
+{{ default "" .Values.externalClickhouse.clusterName }}
 {{- end -}}
 {{- end -}}
 
