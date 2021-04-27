@@ -30,6 +30,8 @@ data:
       url: "http://{{ template "sentry.fullname" . }}-symbolicator:{{ template "symbolicator.port" }}"
     {{- end }}
 
+    transaction-events.force-disable-internal-project: {{ .Values.system.transactionEvents.forceDisableInternalProject }}
+
     ##########
     # Github #
     ##########

@@ -276,7 +276,9 @@ system:
   ## This should only be used if you’re installing Sentry behind your company’s firewall.
   public: false
   ## This will generate one for you (it's must be given upon updates)
-  #secretKey: "xx"
+  ## This will disable or enable transaction recording of internal components
+  transactionEvents:
+    forceDisableInternalProject: false
 
 mail:
   backend: dummy # smtp
