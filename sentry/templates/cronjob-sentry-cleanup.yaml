@@ -58,6 +58,8 @@ spec:
               value: http://{{ template "sentry.fullname" . }}-snuba:{{ template "snuba.port" }}
             - name: C_FORCE_ROOT
               value: "true"
+            - name: SENTRY_LOG_LEVEL
+              value: {{ .Values.sentry.logging.level | default "INFO" | quote }}
             {{- if .Values.postgresql.enabled }}
             - name: POSTGRES_PASSWORD
               valueFrom:
