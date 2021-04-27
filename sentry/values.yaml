@@ -259,6 +259,8 @@ hooks:
         cpu: 300m
         memory: 2048Mi
   snubaInit:
+    env: []
+    kafka: false
     resources:
       limits:
         cpu: 2000m

@@ -56,7 +56,7 @@ spec:
             done
             {{- else }}
             export CLICKHOUSE_HOST={{ $clickhouseHost }};
-            snuba bootstrap --force;
+            snuba bootstrap --force {{ if not .Values.hooks.snubaInit.kafka }}--no-kafka{{ end }};
             {{- end }}
         env:
         - name: LOG_LEVEL
