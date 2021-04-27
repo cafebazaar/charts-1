@@ -52,6 +52,7 @@ relay:
 
 sentry:
   singleOrganization: true
+  eventRetentionDays: 14
   logging:
     level: INFO
   web:
@@ -146,7 +147,7 @@ sentry:
   cleanup:
     enabled: true
     schedule: "0 0 * * *"
-    days: 90
+
   subscriptionConsumerTransactions:
     replicas: 1
     env: []
