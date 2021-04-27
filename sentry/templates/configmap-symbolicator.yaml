@@ -15,7 +15,9 @@ data:
     bind: "0.0.0.0:{{ template "symbolicator.port" }}"
     logging:
       level: "{{ .Values.symbolicator.api.logging.level }}"
+    {{- if .Values.metrics.enabled }}
     metrics:
-      statsd: null
-    sentry_dsn: null # TODO: Automatically fill this with the internal project DSN
+      statsd: {{ template "sentry.fullname" . }}-metrics:9125
+      prefix: sentry.symbolicator
+    {{- end}}
 {{- end }}
