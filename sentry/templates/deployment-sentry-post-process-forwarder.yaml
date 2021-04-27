@@ -64,7 +64,7 @@ spec:
           - "post-process-forwarder"
           - "--commit-batch-size"
           - "{{ default "1" .Values.sentry.postProcessForward.commitBatchSize }}"
-          {{- if and (not .Values.kafka.enabled) .Values.externalKafka.topics.commitLog }}
+          {{- if and (not .Values.kafka.enabled) .Values.externalKafka.topics }}
           - "--commit-log-topic"
           - "{{ .Values.externalKafka.topics.commitLog }}"
           {{- with .Values.externalKafka.consumerGroups }}
