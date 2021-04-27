@@ -59,10 +59,7 @@ spec:
         - name: SNUBA
           value: {{ template "snuba.api" . }}
         - name: SENTRY_LOG_LEVEL
-          valueFrom:
-            configMapKeyRef:
-              name: {{ template "sentry.fullname" . }}-sentry
-              key: sentryLogLevel
+          value: {{ .Values.sentry.logging.level | default "INFO" | quote }}
         - name: C_FORCE_ROOT
           value: "true"
         {{- if .Values.postgresql.enabled }}
