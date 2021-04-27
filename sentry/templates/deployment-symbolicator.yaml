@@ -52,7 +52,6 @@ spec:
       - name: {{ .Chart.Name }}-symbolicator
         image: "{{ template "symbolicator.image" . }}"
         imagePullPolicy: {{ default "IfNotPresent" .Values.images.symbolicator.pullPolicy }}
-        command: ["snuba"]
         args:
         - "run"
         - "-c"
