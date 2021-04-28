@@ -82,12 +82,12 @@ spec:
 {{ toYaml .Values.snuba.cleanupErrors.env | indent 12 }}
 {{- end }}
             envFrom:
-                - secretRef:
-                      name: {{ template "sentry.fullname" . }}-snuba-env
+              - secretRef:
+                  name: {{ template "sentry.fullname" . }}-snuba-env
             volumeMounts:
-                - mountPath: /etc/snuba
-                  name: config
-                  readOnly: true
+              - mountPath: /etc/snuba
+                name: config
+                readOnly: true
             resources:
 {{ toYaml .Values.snuba.cleanupErrors.resources | indent 14 }}
 {{- if .Values.snuba.cleanupErrors.sidecars }}

@@ -48,7 +48,6 @@ spec:
           - name: {{ .Chart.Name }}-sentry-cleanup
             image: "{{ template "sentry.image" . }}"
             imagePullPolicy: {{ default "IfNotPresent" .Values.images.sentry.pullPolicy }}
-            command: ["sentry"]
             args:
               - "cleanup"
               - "--days"

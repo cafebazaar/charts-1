@@ -42,7 +42,9 @@ spec:
       - name: db-init-job
         image: "{{ template "sentry.image" . }}"
         imagePullPolicy: {{ default "IfNotPresent" .Values.images.sentry.pullPolicy }}
-        command: ["sentry","upgrade","--noinput"]
+        args:
+        - upgrade
+        - --noinput
         env:
         {{- if .Values.postgresql.enabled }}
         - name: POSTGRES_PASSWORD

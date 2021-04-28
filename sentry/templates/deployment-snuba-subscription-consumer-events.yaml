@@ -59,7 +59,6 @@ spec:
       - name: {{ .Chart.Name }}-snuba
         image: "{{ template "snuba.image" . }}"
         imagePullPolicy: {{ default "IfNotPresent" .Values.images.snuba.pullPolicy }}
-        command: ["snuba"]
         args:
           - subscriptions
           - --auto-offset-reset=latest
