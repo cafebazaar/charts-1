@@ -63,7 +63,7 @@ spec:
         args:
         - consumer
         - --storage
-        - events
+        - errors
         - --auto-offset-reset=latest
         - --max-batch-time-ms
         - "750"

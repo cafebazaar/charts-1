@@ -63,7 +63,7 @@ spec:
         args:
         - replacer
         - --storage
-        - events
+        - errors
         - --auto-offset-reset=latest
         - --max-batch-size
         -  "3"
