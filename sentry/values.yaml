@@ -316,6 +316,7 @@ hooks:
     podAnnotations: {}
     resources:
       limits:
+        cpu: 300m
         memory: 2048Mi
       requests:
         cpu: 300m
@@ -329,11 +330,11 @@ hooks:
     podAnnotations: {}
     resources:
       limits:
-        cpu: 2000m
-        memory: 1Gi
+        cpu: 500m
+        memory: 256Mi
       requests:
-        cpu: 700m
-        memory: 1Gi
+        cpu: 250m
+        memory: 256Mi
 
 system:
   ## be sure to include the scheme on the url, for example: "https://sentry.example.com"
@@ -662,6 +663,7 @@ rabbitmq:
   clustering:
     forceBoot: true
     rebalance: true
+
   replicaCount: 3
   auth:
     erlangCookie: pHgpy3Q6adTskzAT6bLHCFqFTF7lMxhA
