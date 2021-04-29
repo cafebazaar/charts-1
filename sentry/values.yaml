@@ -112,7 +112,6 @@ sentry:
 
   ingestConsumer:
     replicas: 1
-    # concurrency: 4
     env: []
     resources: {}
     affinity: {}

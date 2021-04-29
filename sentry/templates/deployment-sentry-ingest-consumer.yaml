@@ -67,10 +67,6 @@ spec:
           - "run"
           - "ingest-consumer"
           - "--all-consumer-types"
-          {{- if .Values.sentry.ingestConsumer.concurrency }}
-          - "-c"
-          - "{{ .Values.sentry.ingestConsumer.concurrency }}"
-          {{- end }}
           {{- if and (not .Values.kafka.enabled) .Values.externalKafka.consumerGroups }}
           - "--consumer-group"
           - "{{ .Values.externalKafka.consumerGroups.ingestConsumer }}"
