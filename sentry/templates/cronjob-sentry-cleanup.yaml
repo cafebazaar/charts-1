@@ -48,16 +48,17 @@ spec:
           - name: {{ .Chart.Name }}-sentry-cleanup
             image: "{{ template "sentry.image" . }}"
             imagePullPolicy: {{ default "IfNotPresent" .Values.images.sentry.pullPolicy }}
-            command: ["sentry"]
             args:
               - "cleanup"
               - "--days"
-              - "{{ .Values.sentry.cleanup.days }}"
+              - "{{ .Values.sentry.eventRetentionDays }}"
             env:
             - name: SNUBA
               value: http://{{ template "sentry.fullname" . }}-snuba:{{ template "snuba.port" }}
             - name: C_FORCE_ROOT
               value: "true"
+            - name: SENTRY_LOG_LEVEL
+              value: {{ .Values.sentry.logging.level | default "INFO" | quote }}
             {{- if .Values.postgresql.enabled }}
             - name: POSTGRES_PASSWORD
               valueFrom:
@@ -72,6 +73,9 @@ spec:
 {{- if .Values.sentry.cleanup.env }}
 {{ toYaml .Values.sentry.cleanup.env | indent 12 }}
 {{- end }}
+            envFrom:
+            - secretRef:
+                name: {{ template "sentry.fullname" . }}-sentry-env
             volumeMounts:
             - mountPath: /etc/sentry
               name: config
@@ -84,6 +88,9 @@ spec:
             {{ end }}
             resources:
 {{ toYaml .Values.sentry.cleanup.resources | indent 14 }}
+{{- if .Values.sentry.cleanup.sidecars }}
+{{ toYaml .Values.sentry.cleanup.sidecars | indent 10 }}
+{{- end }}
           restartPolicy: Never
           volumes:
           - name: config
@@ -101,6 +108,9 @@ spec:
             secret:
               secretName: {{ .Values.filestore.gcs.secretName }}
           {{ end }}
+{{- if .Values.sentry.cleanup.volumes }}
+{{ toYaml .Values.sentry.cleanup.volumes | indent 10 }}
+{{- end }}
           {{- if .Values.sentry.cleanup.priorityClassName }}
           priorityClassName: "{{ .Values.sentry.cleanup.priorityClassName }}"
           {{- end }}

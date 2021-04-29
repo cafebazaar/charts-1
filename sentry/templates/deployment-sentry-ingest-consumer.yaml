@@ -17,6 +17,7 @@ metadata:
     "helm.sh/hook-weight": "10"
   {{- end }}
 spec:
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
   selector:
     matchLabels:
       app: {{ template "sentry.fullname" . }}
@@ -62,24 +63,21 @@ spec:
       - name: {{ .Chart.Name }}-ingest-consumer
         image: "{{ template "sentry.image" . }}"
         imagePullPolicy: {{ default "IfNotPresent" .Values.images.sentry.pullPolicy }}
-        command: ["sentry"]
         args:
           - "run"
           - "ingest-consumer"
           - "--all-consumer-types"
-          {{- if .Values.sentry.ingestConsumer.concurrency }}
-          - "-c"
-          - "{{ .Values.sentry.ingestConsumer.concurrency }}"
-          {{- end }}
           {{- if and (not .Values.kafka.enabled) .Values.externalKafka.consumerGroups }}
           - "--consumer-group"
-          - "{{ .Values.externalKafka.consumerGroups.ingest }}"
+          - "{{ .Values.externalKafka.consumerGroups.ingestConsumer }}"
           {{- end }}
         env:
         - name: SNUBA
           value: http://{{ template "sentry.fullname" . }}-snuba:{{ template "snuba.port" }}
         - name: C_FORCE_ROOT
           value: "true"
+        - name: SENTRY_LOG_LEVEL
+          value: {{ .Values.sentry.logging.level | default "INFO" | quote }}
         {{- if .Values.postgresql.enabled }}
         - name: POSTGRES_PASSWORD
           valueFrom:
@@ -94,6 +92,9 @@ spec:
 {{- if .Values.sentry.ingestConsumer.env }}
 {{ toYaml .Values.sentry.ingestConsumer.env | indent 8 }}
 {{- end }}
+        envFrom:
+        - secretRef:
+            name: {{ template "sentry.fullname" . }}-sentry-env
         volumeMounts:
         - mountPath: /etc/sentry
           name: config
@@ -105,7 +106,10 @@ spec:
           mountPath: /var/run/secrets/google
         {{ end }}
         resources:
-{{ toYaml .Values.sentry.ingestConsumer.resources | indent 12 }}
+{{ toYaml .Values.sentry.ingestConsumer.resources | indent 10 }}
+{{- if .Values.sentry.ingestConsumer.sidecars }}
+{{ toYaml .Values.sentry.ingestConsumer.sidecars | indent 6 }}
+{{- end }}
       volumes:
       - name: config
         configMap:
@@ -122,6 +126,9 @@ spec:
         secret:
           secretName: {{ .Values.filestore.gcs.secretName }}
       {{ end }}
+{{- if .Values.sentry.ingestConsumer.volumes }}
+{{ toYaml .Values.sentry.ingestConsumer.volumes | indent 6 }}
+{{- end }}
       {{- if .Values.sentry.ingestConsumer.priorityClassName }}
       priorityClassName: "{{ .Values.sentry.ingestConsumer.priorityClassName }}"
       {{- end }}

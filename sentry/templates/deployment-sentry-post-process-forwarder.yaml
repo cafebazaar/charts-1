@@ -17,6 +17,7 @@ metadata:
     "helm.sh/hook-weight": "10"
   {{- end }}
 spec:
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
   selector:
     matchLabels:
         app: sentry
@@ -57,31 +58,30 @@ spec:
       - name: {{ .Chart.Name }}-post-process-forward
         image: "{{ template "sentry.image" . }}"
         imagePullPolicy: {{ default "IfNotPresent" .Values.images.sentry.pullPolicy }}
-        command: ["sentry"]
         args:
           - "run"
           - "post-process-forwarder"
           - "--commit-batch-size"
           - "{{ default "1" .Values.sentry.postProcessForward.commitBatchSize }}"
-          {{- if and (not .Values.kafka.enabled) }}
-          {{- if .Values.externalKafka.topics.commitLog }}
+          {{- if and (not .Values.kafka.enabled) .Values.externalKafka.topics }}
           - "--commit-log-topic"
           - "{{ .Values.externalKafka.topics.commitLog }}"
-          {{- end }}
           {{- with .Values.externalKafka.consumerGroups }}
-          {{- if .Values.sentry.postProcess }}
+          {{- if .postProcessor }}
           - "--consumer-group"
           - "{{ .postProcessor }}"
           {{- end }}
-          {{- if .eventsSubscriptions }}
+          {{- if .commitLog }}
           - "--synchronize-commit-group"
-          - "{{ .eventsSubscriptions }}"
+          - "{{ .commitLog }}"
           {{- end }}
           {{- end }}
           {{- end }}
         env:
         - name: SNUBA
           value: http://{{ template "sentry.fullname" . }}-snuba:{{ template "snuba.port" }}
+        - name: SENTRY_LOG_LEVEL
+          value: {{ .Values.sentry.logging.level | default "INFO" | quote }}
         {{- if .Values.postgresql.enabled }}
         - name: POSTGRES_PASSWORD
           valueFrom:
@@ -96,6 +96,9 @@ spec:
 {{- if .Values.sentry.postProcessForward.env }}
 {{ toYaml .Values.sentry.postProcessForward.env | indent 8 }}
 {{- end }}
+        envFrom:
+        - secretRef:
+            name: {{ template "sentry.fullname" . }}-sentry-env
         volumeMounts:
         - mountPath: /etc/sentry
           name: config
@@ -107,7 +110,10 @@ spec:
           mountPath: /var/run/secrets/google
         {{ end }}
         resources:
-{{ toYaml .Values.sentry.postProcessForward.resources | indent 12 }}
+{{ toYaml .Values.sentry.postProcessForward.resources | indent 10 }}
+{{- if .Values.sentry.postProcessForward.sidecars }}
+{{ toYaml .Values.sentry.postProcessForward.sidecars | indent 6 }}
+{{- end }}
       volumes:
       - name: config
         configMap:
@@ -124,6 +130,9 @@ spec:
         secret:
           secretName: {{ .Values.filestore.gcs.secretName }}
       {{ end }}
+{{- if .Values.sentry.postProcessForward.volumes }}
+{{ toYaml .Values.sentry.postProcessForward.volumes | indent 6 }}
+{{- end }}
       {{- if .Values.sentry.postProcessForward.priorityClassName }}
       priorityClassName: "{{ .Values.sentry.postProcessForward.priorityClassName }}"
       {{- end }}

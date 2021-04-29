@@ -23,6 +23,9 @@ spec:
         {{- if .Values.sentry.worker.annotations }}
 {{ toYaml .Values.sentry.worker.annotations | indent 8 }}
         {{- end }}
+        {{- if .Values.hooks.dbInit.podAnnotations }}
+{{ toYaml .Values.hooks.dbInit.podAnnotations | indent 8 }}
+        {{- end }}
       labels:
         app: sentry
         release: "{{ .Release.Name }}"
@@ -39,7 +42,9 @@ spec:
       - name: db-init-job
         image: "{{ template "sentry.image" . }}"
         imagePullPolicy: {{ default "IfNotPresent" .Values.images.sentry.pullPolicy }}
-        command: ["sentry","upgrade","--noinput"]
+        args:
+        - upgrade
+        - --noinput
         env:
         {{- if .Values.postgresql.enabled }}
         - name: POSTGRES_PASSWORD
@@ -51,14 +56,23 @@ spec:
         {{- if .Values.hooks.dbInit.env }}
 {{ toYaml .Values.hooks.dbInit.env | indent 8 }}
         {{- end }}
+        envFrom:
+        - secretRef:
+            name: {{ template "sentry.fullname" . }}-sentry-env
         volumeMounts:
         - mountPath: /etc/sentry
           name: config
           readOnly: true
         resources:
 {{ toYaml .Values.hooks.dbInit.resources | indent 10 }}
+{{- if .Values.hooks.dbInit.sidecars }}
+{{ toYaml .Values.hooks.dbInit.sidecars | indent 6 }}
+{{- end }}
       volumes:
       - name: config
         configMap:
           name: {{ template "sentry.fullname" . }}-sentry
+{{- if .Values.hooks.dbInit.volumes }}
+{{ toYaml .Values.hooks.dbInit.volumes | indent 6 }}
+{{- end }}
 {{- end -}}

@@ -46,5 +46,10 @@ data:
       {{- else }}
       redis: "redis://{{ $redisHost }}:{{ $redisPort }}"
       {{- end }}
+    {{ if .Values.metrics.enabled }}
+    metrics:
+      statsd: {{ template "sentry.fullname" . }}-metrics:9125
+      prefix: sentry.relay
+    {{- end }}
 
 {{ .Values.config.relay | indent 4 }}

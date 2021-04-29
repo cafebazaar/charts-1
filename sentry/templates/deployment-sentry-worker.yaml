@@ -8,6 +8,7 @@ metadata:
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
 spec:
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
   selector:
     matchLabels:
         app: {{ template "sentry.fullname" . }}
@@ -53,7 +54,6 @@ spec:
       - name: {{ .Chart.Name }}-worker
         image: "{{ template "sentry.image" . }}"
         imagePullPolicy: {{ default "IfNotPresent" .Values.images.sentry.pullPolicy }}
-        command: ["sentry"]
         args:
           - "run"
           - "worker"
@@ -67,10 +67,7 @@ spec:
         - name: C_FORCE_ROOT
           value: "true"
         - name: SENTRY_LOG_LEVEL
-          valueFrom:
-            configMapKeyRef:
-              name: {{ template "sentry.fullname" . }}-sentry
-              key: sentryLogLevel
+          value: {{ .Values.sentry.logging.level | default "INFO" | quote }}
         {{- if .Values.postgresql.enabled }}
         - name: POSTGRES_PASSWORD
           valueFrom:
@@ -85,6 +82,9 @@ spec:
 {{- if .Values.sentry.worker.env }}
 {{ toYaml .Values.sentry.worker.env | indent 8 }}
 {{- end }}
+        envFrom:
+        - secretRef:
+            name: {{ template "sentry.fullname" . }}-sentry-env
         volumeMounts:
         - mountPath: /etc/sentry
           name: config
@@ -96,7 +96,10 @@ spec:
           mountPath: /var/run/secrets/google
         {{ end }}
         resources:
-{{ toYaml .Values.sentry.worker.resources | indent 12 }}
+{{ toYaml .Values.sentry.worker.resources | indent 10 }}
+{{- if .Values.sentry.worker.sidecars }}
+{{ toYaml .Values.sentry.worker.sidecars | indent 6 }}
+{{- end }}
       volumes:
       - name: config
         configMap:
@@ -116,3 +119,6 @@ spec:
       {{- if .Values.sentry.worker.priorityClassName }}
       priorityClassName: "{{ .Values.sentry.worker.priorityClassName }}"
       {{- end }}
+{{- if .Values.sentry.worker.volumes }}
+{{ toYaml .Values.sentry.worker.volumes | indent 6 }}
+{{- end }}

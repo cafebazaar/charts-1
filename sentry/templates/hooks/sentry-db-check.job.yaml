@@ -1,4 +1,4 @@
-{{- if .Values.hooks.enabled -}}
+{{- if and .Values.hooks.enabled (or .Values.clickhouse.enabled .Values.kafka.enabled) -}}
 {{- $clickhouseHost := include "sentry.clickhouse.host" . -}}
 {{- $clickhousePort := include "sentry.clickhouse.port" . -}}
 {{- $kafkaHost := include "sentry.kafka.hosts" . -}}
@@ -26,6 +26,9 @@ spec:
         {{- if .Values.sentry.worker.annotations }}
 {{ toYaml .Values.sentry.worker.annotations | indent 8 }}
         {{- end }}
+        {{- if .Values.hooks.dbCheck.podAnnotations }}
+{{ toYaml .Values.hooks.dbCheck.podAnnotations | indent 8 }}
+        {{- end }}
       labels:
         app: sentry
         release: "{{ .Release.Name }}"
@@ -34,13 +37,14 @@ spec:
         {{- end }}
     spec:
       restartPolicy: Never
-      {{- if .Values.images.sentry.imagePullSecrets }}
+      {{- if .Values.hooks.dbCheck.image.imagePullSecrets }}
       imagePullSecrets:
-{{ toYaml .Values.images.sentry.imagePullSecrets | indent 8 }}
+{{ toYaml .Values.hooks.dbCheck.image.imagePullSecrets | indent 8 }}
       {{- end }}
       containers:
       - name: db-check
-        image: subfuzion/netcat:latest
+        image: {{ template "dbCheck.image" }}
+        imagePullPolicy: {{ default "IfNotPresent" .Values.hooks.dbCheck.image.pullPolicy }}
         command:
           - /bin/sh
           - -c

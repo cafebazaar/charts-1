@@ -57,17 +57,21 @@ spec:
       - name: {{ .Chart.Name }}-subscription-consumer-events
         image: "{{ template "sentry.image" . }}"
         imagePullPolicy: {{ default "IfNotPresent" .Values.images.sentry.pullPolicy }}
-        command: ["sentry"]
         args:
           - run
           - query-subscription-consumer
-          - --commit-batch-size 1
-          {{- if and (not .Values.kafka.enabled) .Values.externalKafka.topics.eventsSubscriptionResults }}
-          - --topic "{{ .Values.externalKafka.topics.eventsSubscriptionResults }}"
+          - --commit-batch-size {{ default "1" .Values.sentry.subscriptionConsumerEvents.commitBatchSize }}
+          {{- if and (not .Values.kafka.enabled) .Values.externalKafka.topics }}
+          - --topic {{ .Values.externalKafka.topics.eventsSubscriptionResults }}
+          {{- end }}
+          {{- if and (not .Values.kafka.enabled) .Values.externalKafka.consumerGroups }}
+          - --group {{ .Values.externalKafka.consumerGroups.sentrySubscription }}
           {{- end }}
         env:
         - name: SNUBA
           value: {{ template "snuba.api" . }}
+        - name: SENTRY_LOG_LEVEL
+          value: {{ .Values.sentry.logging.level | default "INFO" | quote }}
         {{- if .Values.postgresql.enabled }}
         - name: POSTGRES_PASSWORD
           valueFrom:
@@ -82,6 +86,9 @@ spec:
 {{- if .Values.sentry.subscriptionConsumerEvents.env }}
 {{ toYaml .Values.sentry.subscriptionConsumerEvents.env | indent 8 }}
 {{- end }}
+        envFrom:
+        - secretRef:
+            name: {{ template "sentry.fullname" . }}-sentry-env
         volumeMounts:
         - mountPath: /etc/sentry
           name: config
@@ -93,7 +100,7 @@ spec:
           mountPath: /var/run/secrets/google
         {{ end }}
         resources:
-{{ toYaml .Values.sentry.subscriptionConsumerEvents.resources | indent 12 }}
+{{ toYaml .Values.sentry.subscriptionConsumerEvents.resources | indent 10 }}
       volumes:
       - name: config
         configMap:

@@ -25,6 +25,7 @@ spec:
 {{- if not .Values.relay.autoscaling.enabled }}
   replicas: {{ .Values.relay.replicas }}
 {{- end }}
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
   template:
     metadata:
       annotations:
@@ -96,7 +97,7 @@ spec:
           livenessProbe:
             failureThreshold: 5
             httpGet:
-              path: /api/relay/healthcheck/ready/
+              path: /api/relay/healthcheck/live/
               port: {{ template "relay.port" }}
               scheme: HTTP
             initialDelaySeconds: {{ .Values.relay.probeInitialDelaySeconds }}
@@ -114,7 +115,10 @@ spec:
             successThreshold: 1
             timeoutSeconds: 2
           resources:
-  {{ toYaml .Values.relay.resources | indent 10 }}
+{{ toYaml .Values.relay.resources | indent 12 }}
+{{- if .Values.relay.sidecars }}
+{{ toYaml .Values.relay.sidecars | indent 6 }}
+{{- end }}
       volumes:
       - name: config
         configMap:
@@ -122,6 +126,9 @@ spec:
           defaultMode: 0644
       - name: credentials
         emptyDir: {}
+{{- if .Values.relay.volumes }}
+{{ toYaml .Values.relay.volumes | indent 6 }}
+{{- end }}
       {{- if .Values.relay.priorityClassName }}
       priorityClassName: "{{ .Values.relay.priorityClassName }}"
       {{- end }}

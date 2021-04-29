@@ -35,6 +35,12 @@
 {{- .Values.images.symbolicator.tag -}}
 {{- end -}}
 
+{{- define "dbCheck.image" -}}
+{{- default "subfuzion/netcat" .Values.hooks.dbCheck.image.repository -}}
+:
+{{- default "latest" .Values.hooks.dbCheck.image.tag -}}
+{{- end -}}
+
 {{/*
 Expand the name of the chart.
 */}}
@@ -270,13 +276,60 @@ Set ClickHouse port
 {{- end -}}
 
 {{/*
+Set ClickHouse Database
+*/}}
+{{- define "sentry.clickhouse.database" -}}
+{{- if .Values.clickhouse.enabled -}}
+default
+{{- else -}}
+{{ required "A valid .Values.externalClickhouse.database is required" .Values.externalClickhouse.database }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Set ClickHouse Authorization
+*/}}
+{{- define "sentry.clickhouse.auth" -}}
+--user {{ include "sentry.clickhouse.username" . }} --password {{ include "sentry.clickhouse.password" .| quote }}
+{{- end -}}
+
+{{/*
+Set ClickHouse User
+*/}}
+{{- define "sentry.clickhouse.username" -}}
+{{- if .Values.clickhouse.enabled -}}
+  {{- if .Values.clickhouse.clickhouse.configmap.users.enabled -}}
+{{ (index .Values.clickhouse.clickhouse.configmap.users.user 0).name }} 
+  {{- else -}}
+default
+  {{- end -}}
+{{- else -}}
+{{ required "A valid .Values.externalClickhouse.username is required" .Values.externalClickhouse.username }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Set ClickHouse Password
+*/}}
+{{- define "sentry.clickhouse.password" -}}
+{{- if .Values.clickhouse.enabled -}}
+  {{- if .Values.clickhouse.clickhouse.configmap.users.enabled -}}
+{{ (index .Values.clickhouse.clickhouse.configmap.users.user 0).config.password }} 
+  {{- else -}}
+  {{- end -}}
+{{- else -}}
+{{ .Values.externalClickhouse.password }}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Set ClickHouse cluster name
 */}}
 {{- define "sentry.clickhouse.cluster.name" -}}
 {{- if .Values.clickhouse.enabled -}}
 {{ .Release.Name | printf "%s-clickhouse" }}
 {{- else -}}
-{{ required "A valid .Values.externalClickhouse.clusterName is required" .Values.externalClickhouse.clusterName }}
+{{ default "" .Values.externalClickhouse.clusterName }}
 {{- end -}}
 {{- end -}}
 

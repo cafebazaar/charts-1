@@ -1,6 +1,7 @@
 {{- $redisHost := include "sentry.redis.host" . -}}
 {{- $redisPort := include "sentry.redis.port" . -}}
 {{- $redisPass := include "sentry.redis.password" . -}}
+{{- $kafkaBootstrappers := include "sentry.kafka.bootstrappers" . -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -28,6 +29,8 @@ data:
     symbolicator.options:
       url: "http://{{ template "sentry.fullname" . }}-symbolicator:{{ template "symbolicator.port" }}"
     {{- end }}
+
+    transaction-events.force-disable-internal-project: {{ .Values.system.transactionEvents.forceDisableInternalProject }}
 
     ##########
     # Github #
@@ -133,7 +136,7 @@ data:
             "ENGINE": "sentry.db.postgres",
             "NAME": {{ include "sentry.postgresql.database" . | quote }},
             "USER": {{ include "sentry.postgresql.username" . | quote }},
-            "PASSWORD": os.environ.get("POSTGRES_PASSWORD", {{ include "sentry.postgresql.password" . | quote }}),
+            "PASSWORD": os.environ.get("POSTGRES_PASSWORD", ""),
             "HOST": {{ include "sentry.postgresql.host" . | quote }},
             "PORT": {{ template "sentry.postgresql.port" . }},
             {{- if .Values.externalPostgresql.sslMode }}
@@ -156,7 +159,9 @@ data:
     # and thus various UI optimizations should be enabled.
     SENTRY_SINGLE_ORGANIZATION = {{ if .Values.sentry.singleOrganization }}True{{ else }}False{{ end }}
 
-    SENTRY_OPTIONS["system.event-retention-days"] = int(env('SENTRY_EVENT_RETENTION_DAYS') or 90)
+    SENTRY_OPTIONS["system.event-retention-days"] = int(env('SENTRY_EVENT_RETENTION_DAYS') or {{ .Values.sentry.eventRetentionDays }} )
+
+    SENTRY_BEACON = {{ .Values.sentry.beacon | ternary "True" "False" }}
 
     #########
     # Queue #
@@ -189,11 +194,71 @@ data:
     #     }
     # }
 
+    CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        {{- if $redisPass }}
+        "LOCATION": ["redis://:{{ $redisPass }}@{{ $redisHost }}:{{ $redisPort }}/0"],
+        {{- else }}
+        "LOCATION": ["redis://{{ $redisHost }}:{{ $redisPort }}"],
+        {{- end }}
+        "TIMEOUT": 3600,
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'SOCKET_CONNECT_TIMEOUT': 0.3,  # in seconds
+            'SOCKET_TIMEOUT': 0.3,  # in seconds
+            'IGNORE_EXCEPTIONS': True,
+            'CONNECTION_POOL_KWARGS': {
+                'max_connections': 100,
+                'socket_keepalive': 15,
+            }
+        },
+      }
+    }
+
     # A primary cache is required for things such as processing events
     SENTRY_CACHE = "sentry.cache.redis.RedisCache"
 
+    {{ if and (not .Values.kafka.enabled) .Values.externalKafka.topics }}
+    {{- with .Values.externalKafka.topics }}
+
+    KAFKA_EVENTS = {{ .sentryEvents | quote }}
+    KAFKA_OUTCOMES = {{ .outcomes | quote }}
+    KAFKA_EVENTS_SUBSCRIPTIONS_RESULTS = {{ .eventsSubscriptionResults | quote }}
+    KAFKA_TRANSACTIONS_SUBSCRIPTIONS_RESULTS = {{ .transactionsSubscriptionResults | quote }}
+    KAFKA_SUBSCRIPTION_RESULT_TOPICS = {
+        "events": {{ .eventsSubscriptionResults | quote }},
+        "transactions": {{ .transactionsSubscriptionResults | quote }},
+    }
+    KAFKA_INGEST_EVENTS = {{ .ingestEvents | quote }}
+    KAFKA_INGEST_ATTACHMENTS = {{ .ingestAttachments | quote }}
+    KAFKA_INGEST_TRANSACTIONS = {{ .ingestTransactions | quote }}
+
+
+    KAFKA_TOPICS = {
+        KAFKA_EVENTS: {"cluster": "default", "topic": KAFKA_EVENTS},
+        KAFKA_OUTCOMES: {"cluster": "default", "topic": KAFKA_OUTCOMES},
+        KAFKA_EVENTS_SUBSCRIPTIONS_RESULTS: {
+            "cluster": "default",
+            "topic": KAFKA_EVENTS_SUBSCRIPTIONS_RESULTS,
+        },
+        KAFKA_TRANSACTIONS_SUBSCRIPTIONS_RESULTS: {
+            "cluster": "default",
+            "topic": KAFKA_TRANSACTIONS_SUBSCRIPTIONS_RESULTS,
+        },
+        # Topic for receiving simple events (error events without attachments) from Relay
+        KAFKA_INGEST_EVENTS: {"cluster": "default", "topic": KAFKA_INGEST_EVENTS},
+        # Topic for receiving 'complex' events (error events with attachments) from Relay
+        KAFKA_INGEST_ATTACHMENTS: {"cluster": "default", "topic": KAFKA_INGEST_ATTACHMENTS},
+        # Topic for receiving transaction events (APM events) from Relay
+        KAFKA_INGEST_TRANSACTIONS: {"cluster": "default", "topic": KAFKA_INGEST_TRANSACTIONS},
+    }
+
+    {{- end }}
+    {{- end }}
+
     DEFAULT_KAFKA_OPTIONS = {
-        "bootstrap.servers": {{ printf "%s:%s" (include "sentry.kafka.hosts" .) (include "sentry.kafka.port" .) | quote }},
+        "bootstrap.servers": "{{ $kafkaBootstrappers }}",
         "message.max.bytes": 50000000,
         "socket.timeout.ms": 1000,
     }
@@ -267,11 +332,31 @@ data:
     SENTRY_WEB_OPTIONS = {
         "http": "%s:%s" % (SENTRY_WEB_HOST, SENTRY_WEB_PORT),
         "protocol": "uwsgi",
-        # This is needed to prevent https://git.io/fj7Lw
+        # This is needed in order to prevent https://git.io/fj7Lw
         "uwsgi-socket": None,
-        "http-keepalive": True,
+        "so-keepalive": True,
+        # Keep this between 15s-75s as that's what Relay supports
+        "http-keepalive": 60,
+        "http-chunked-input": True,
+        # the number of web workers
+        "workers": 3,
+        "threads": 4,
         "memory-report": False,
-        # 'workers': 3,  # the number of web workers
+        # Some stuff so uwsgi will cycle workers sensibly
+        "max-requests": 100000,
+        "max-requests-delta": 500,
+        "max-worker-lifetime": 86400,
+        # Duplicate options from sentry default just so we don't get
+        # bit by sentry changing a default value that we depend on.
+        "thunder-lock": True,
+        "log-x-forwarded-for": False,
+        "buffer-size": 32768,
+        "limit-post": 209715200,
+        "disable-logging": True,
+        "reload-on-rss": 600,
+        "ignore-sigpipe": True,
+        "ignore-write-errors": True,
+        "disable-write-exception": True,
     }
 
     ###########
@@ -281,10 +366,10 @@ data:
     # If you're using a reverse SSL proxy, you should enable the X-Forwarded-Proto
     # header and enable the settings below
 
-    # SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    # SESSION_COOKIE_SECURE = True
-    # CSRF_COOKIE_SECURE = True
-    # SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
 
     # End of SSL/TLS settings
 
@@ -292,16 +377,20 @@ data:
     # Features #
     ############
 
+    
+    SENTRY_FEATURES["projects:sample-events"] = False
 
+    SENTRY_FEATURES["organizations:invite-members"] = {{ .Values.sentry.features.enableInvites | ternary "True" "False" }}
+    SENTRY_ENABLE_INVITES = {{ .Values.sentry.features.enableInvites | ternary "True" "False" }}
     SENTRY_FEATURES = {
-      "auth:register": {{ .Values.auth.register | ternary "True" "False" }}
+      "auth:register": {{ .Values.sentry.features.auth.register | ternary "True" "False" }}
     }
     SENTRY_FEATURES["projects:sample-events"] = False
     SENTRY_FEATURES.update(
         {
             feature: True
             for feature in (
-                {{- if not .Values.sentry.singleOrganization }}
+                {{ if not .Values.sentry.singleOrganization }}
                 "organizations:create",
                 {{ end -}}
 
@@ -393,7 +482,7 @@ data:
     SENTRY_OPTIONS['mail.backend'] = os.getenv("SENTRY_EMAIL_BACKEND", {{ .Values.mail.backend | quote }})
     SENTRY_OPTIONS['mail.use-tls'] = bool(strtobool(os.getenv("SENTRY_EMAIL_USE_TLS", {{ .Values.mail.useTls | quote }})))
     SENTRY_OPTIONS['mail.username'] = os.getenv("SENTRY_EMAIL_USERNAME", {{ .Values.mail.username | quote }})
-    SENTRY_OPTIONS['mail.password'] = os.getenv("SENTRY_EMAIL_PASSWORD", {{ .Values.mail.password | quote }})
+    SENTRY_OPTIONS['mail.password'] = os.getenv("SENTRY_EMAIL_PASSWORD", "")
     SENTRY_OPTIONS['mail.port'] = int(os.getenv("SENTRY_EMAIL_PORT", {{ .Values.mail.port | quote }}))
     SENTRY_OPTIONS['mail.host'] = os.getenv("SENTRY_EMAIL_HOST", {{ .Values.mail.host | quote }})
     SENTRY_OPTIONS['mail.from'] = os.getenv("SENTRY_EMAIL_FROM", {{ .Values.mail.from | quote }})
@@ -411,13 +500,20 @@ data:
     SENTRY_RELAY_WHITELIST_PK = []
     SENTRY_RELAY_OPEN_REGISTRATION = True
 
-{{- if .Values.metrics.enabled }}
+{{ if .Values.metrics.enabled }}
     SENTRY_METRICS_BACKEND = 'sentry.metrics.statsd.StatsdMetricsBackend'
     SENTRY_METRICS_OPTIONS = {
         'host': '{{ template "sentry.fullname" . }}-metrics',
         'port': 9125,
     }
+    SENTRY_METRICS_SAMPLE_RATE = 1.0
+    SENTRY_METRICS_PREFIX = "sentry."
+    SENTRY_METRICS_SKIP_INTERNAL_PREFIXES = []  # Order this by most frequent prefixes.
+    SENTRY_APM_SAMPLING = 0
+    SENTRY_SYMBOLICATE_EVENT_APM_SAMPLING = 0.1
+    SENTRY_PROCESS_EVENT_APM_SAMPLING = 0.05
+    SENTRY_INGEST_CONSUMER_APM_SAMPLING = 0.05
+    SENTRY_RELAY_ENDPOINT_APM_SAMPLING = 0.1
 {{- end }}
 
 {{ .Values.config.sentryConfPy | indent 4 }}
-  sentryLogLevel: {{ default 'INFO' .Values.sentry.logging.level | quote }}

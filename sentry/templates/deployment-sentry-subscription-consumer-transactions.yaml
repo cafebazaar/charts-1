@@ -57,22 +57,21 @@ spec:
       - name: {{ .Chart.Name }}-subscription-consumer-transactions
         image: "{{ template "sentry.image" . }}"
         imagePullPolicy: {{ default "IfNotPresent" .Values.images.sentry.pullPolicy }}
-        command: ["sentry"]
         args:
           - run
           - query-subscription-consumer
-          - --commit-batch-size "{{ default '1' .Values.sentry.subscriptionConsumerTransactions.commitBatchSize }}"
-          {{- if and (not .Values.kafka.enabled) .Values.externalKafka.topics.transactionsSubscriptionResults }}
-          - --topic "{{ .Values.externalKafka.topics.transactionsSubscriptionResults }}"
+          - --commit-batch-size {{ default "1" .Values.sentry.subscriptionConsumerTransactions.commitBatchSize }}
+          {{- if and (not .Values.kafka.enabled) .Values.externalKafka.topics }}
+          - --topic {{ .Values.externalKafka.topics.transactionsSubscriptionResults }}
+          {{- end }}
+          {{- if and (not .Values.kafka.enabled) .Values.externalKafka.consumerGroups }}
+          - --group {{ .Values.externalKafka.consumerGroups.sentrySubscription }}
           {{- end }}
         env:
         - name: SNUBA
           value: {{ template "snuba.api" . }}
         - name: SENTRY_LOG_LEVEL
-          valueFrom:
-            configMapKeyRef:
-              name: {{ template "sentry.fullname" . }}-sentry
-              key: sentryLogLevel
+          value: {{ .Values.sentry.logging.level | default "INFO" | quote }}
         {{- if .Values.postgresql.enabled }}
         - name: POSTGRES_PASSWORD
           valueFrom:
@@ -87,6 +86,9 @@ spec:
 {{- if .Values.sentry.subscriptionConsumerTransactions.env }}
 {{ toYaml .Values.sentry.subscriptionConsumerTransactions.env | indent 8 }}
 {{- end }}
+        envFrom:
+        - secretRef:
+            name: {{ template "sentry.fullname" . }}-sentry-env
         volumeMounts:
         - mountPath: /etc/sentry
           name: config
@@ -98,7 +100,7 @@ spec:
           mountPath: /var/run/secrets/google
         {{ end }}
         resources:
-{{ toYaml .Values.sentry.subscriptionConsumerTransactions.resources | indent 12 }}
+{{ toYaml .Values.sentry.subscriptionConsumerTransactions.resources | indent 10 }}
       volumes:
       - name: config
         configMap:

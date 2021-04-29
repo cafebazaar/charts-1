@@ -8,6 +8,7 @@ metadata:
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
 spec:
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
   strategy:
     type: {{ .Values.sentry.web.strategyType }}
   selector:
@@ -55,7 +56,6 @@ spec:
       - name: {{ .Chart.Name }}-web
         image: "{{ template "sentry.image" . }}"
         imagePullPolicy: {{ default "IfNotPresent" .Values.images.sentry.pullPolicy }}
-        command: ["sentry"]
         args:
           - run
           - web
@@ -69,10 +69,7 @@ spec:
         - name: SNUBA
           value: {{ template "snuba.api" . }}
         - name: SENTRY_LOG_LEVEL
-          valueFrom:
-            configMapKeyRef:
-              name: {{ template "sentry.fullname" . }}-sentry
-              key: sentryLogLevel
+          value: {{ .Values.sentry.logging.level | default "INFO" | quote }}
         {{- if .Values.postgresql.enabled }}
         - name: POSTGRES_PASSWORD
           valueFrom:
@@ -91,6 +88,9 @@ spec:
 {{- if .Values.sentry.web.env }}
 {{ toYaml .Values.sentry.web.env | indent 8 }}
 {{- end }}
+        envFrom:
+        - secretRef:
+            name: {{ template "sentry.fullname" . }}-sentry-env
         volumeMounts:
         - mountPath: /etc/sentry
           name: config
@@ -126,7 +126,10 @@ spec:
           successThreshold: 1
           timeoutSeconds: 2
         resources:
-{{ toYaml .Values.sentry.web.resources | indent 12 }}
+{{ toYaml .Values.sentry.web.resources | indent 10 }}
+{{- if .Values.sentry.web.sidecars }}
+{{ toYaml .Values.sentry.web.sidecars | indent 6 }}
+{{- end }}
       volumes:
       - name: config
         configMap:
@@ -151,3 +154,6 @@ spec:
       {{- if .Values.sentry.web.priorityClassName }}
       priorityClassName: "{{ .Values.sentry.web.priorityClassName }}"
       {{- end }}
+{{- if .Values.sentry.web.volumes }}
+{{ toYaml .Values.sentry.web.volumes | indent 6 }}
+{{- end }}
