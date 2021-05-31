@@ -276,6 +276,17 @@ Set ClickHouse port
 {{- end -}}
 
 {{/*
+Set ClickHouse HTTP port
+*/}}
+{{- define "sentry.clickhouse.http_port" -}}
+{{- if .Values.clickhouse.enabled -}}
+{{- default 8123 .Values.clickhouse.clickhouse.http_port }}
+{{- else -}}
+{{ required "A valid .Values.externalClickhouse.httpPort is required" .Values.externalClickhouse.httpPort }}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Set ClickHouse Database
 */}}
 {{- define "sentry.clickhouse.database" -}}
@@ -299,7 +310,7 @@ Set ClickHouse User
 {{- define "sentry.clickhouse.username" -}}
 {{- if .Values.clickhouse.enabled -}}
   {{- if .Values.clickhouse.clickhouse.configmap.users.enabled -}}
-{{ (index .Values.clickhouse.clickhouse.configmap.users.user 0).name }} 
+{{ (index .Values.clickhouse.clickhouse.configmap.users.user 0).name }}
   {{- else -}}
 default
   {{- end -}}
@@ -314,7 +325,7 @@ Set ClickHouse Password
 {{- define "sentry.clickhouse.password" -}}
 {{- if .Values.clickhouse.enabled -}}
   {{- if .Values.clickhouse.clickhouse.configmap.users.enabled -}}
-{{ (index .Values.clickhouse.clickhouse.configmap.users.user 0).config.password }} 
+{{ (index .Values.clickhouse.clickhouse.configmap.users.user 0).config.password }}
   {{- else -}}
   {{- end -}}
 {{- else -}}
@@ -376,4 +387,35 @@ Set RabbitMQ host
 {{- else -}}
 {{ .Values.rabbitmq.host }}
 {{- end -}}
+{{- end -}}
+
+
+{{/*
+Common Snuba environment variables
+*/}}
+{{- define "sentry.snuba.env" -}}
+- name: SNUBA_SETTINGS
+  value: docker
+- name: SENTRY_EVENT_RETENTION_DAYS
+  value: {{ .Values.sentry.eventRetentionDays | quote }}
+- name: CLICKHOUSE_SINGLE_NODE
+  value: {{ if .Values.externalClickhouse.clusterName }}"false"{{ else }}"true"{{end}}
+{{- if .Values.metrics.enabled }}
+- name: DOGSTATSD_HOST
+  value: "{{ template "sentry.fullname" . }}-metrics"
+- name: DOGSTATSD_PORT
+  value: "9125"
+{{- end}}
+- name: DEFAULT_BROKERS
+  value: {{ include "sentry.kafka.bootstrappers" . | quote }}
+- name: SENTRY_DSN
+  value: {{ .Values.snuba.sentryDsn | quote }}
+- name: CLICKHOUSE_HOST
+  value: {{ include "sentry.clickhouse.host" . | quote }}
+- name: REDIS_HOST
+  value: {{ include "sentry.redis.host" . | quote }}
+- name: REDIS_PORT
+  value: {{ include "sentry.redis.port" . | quote }}
+- name: CLICKHOUSE_HTTP_PORT
+  value: {{ include "sentry.clickhouse.http_port" . | quote }}
 {{- end -}}

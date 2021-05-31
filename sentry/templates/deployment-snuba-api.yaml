@@ -49,6 +49,10 @@ spec:
       imagePullSecrets:
 {{ toYaml .Values.images.snuba.imagePullSecrets | indent 8 }}
       {{- end }}
+      {{- if .Values.snuba.api.securityContext }}
+      securityContext:
+{{ toYaml .Values.snuba.api.securityContext | indent 8 }}
+      {{- end }}
       containers:
       - name: {{ .Chart.Name }}-snuba
         args:
@@ -60,28 +64,7 @@ spec:
         ports:
         - containerPort: {{ template "snuba.port" }}
         env:
-        - name: SNUBA_SETTINGS
-          value: docker
-        - name: SENTRY_EVENT_RETENTION_DAYS
-          value: {{ .Values.sentry.eventRetentionDays | quote }}
-        - name: CLICKHOUSE_SINGLE_NODE
-          value: {{ if .Values.externalClickhouse.clusterName }}"false"{{ else }}"true"{{end}}
-        {{- if .Values.metrics.enabled }}
-        - name: DOGSTATSD_HOST
-          value: "{{ template "sentry.fullname" . }}-metrics"
-        - name: DOGSTATSD_PORT
-          value: "9125"
-        {{- end}}
-        - name: DEFAULT_BROKERS
-          value: {{ include "sentry.kafka.bootstrappers" . | quote }}
-        - name: SENTRY_DSN
-          value: {{ .Values.snuba.sentryDsn | quote }}
-        - name: CLICKHOUSE_HOST
-          value: {{ include "sentry.clickhouse.host" . | quote }}
-        - name: REDIS_HOST
-          value: {{ include "sentry.redis.host" . | quote }}
-        - name: REDIS_PORT
-          value: {{ include "sentry.redis.port" . | quote }}
+{{ include "sentry.snuba.env" . | indent 8 }}
 {{- if .Values.snuba.api.env }}
 {{ toYaml .Values.snuba.api.env | indent 8 }}
 {{- end }}

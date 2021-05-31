@@ -35,12 +35,13 @@ images:
 
 relay:
   replicas: 1
-  mode: proxy
+  mode: managed
   env: []
   probeInitialDelaySeconds: 10
   resources: {}
   affinity: {}
   nodeSelector: {}
+  securityContext: {}
   # tolerations: []
   # podLabels: []
 
@@ -75,6 +76,7 @@ sentry:
     affinity: {}
     nodeSelector: {}
     workers: 4
+    securityContext: {}
     # tolerations: []
     # podLabels: []
     # Mount and use custom CA
@@ -116,6 +118,7 @@ sentry:
     resources: {}
     affinity: {}
     nodeSelector: {}
+    securityContext: {}
     # tolerations: []
     # podLabels: []
 
@@ -146,6 +149,7 @@ sentry:
     resources: {}
     affinity: {}
     nodeSelector: {}
+    securityContext: {}
     # tolerations: []
     # podLabels: []
     # commitBatchSize: 1
@@ -194,6 +198,7 @@ snuba:
     resources: {}
     affinity: {}
     nodeSelector: {}
+    securityContext: {}
     # tolerations: []
     # podLabels: []
 
@@ -211,6 +216,7 @@ snuba:
     resources: {}
     affinity: {}
     nodeSelector: {}
+    securityContext: {}
     # tolerations: []
     # podLabels: []
 
@@ -220,6 +226,7 @@ snuba:
     resources: {}
     affinity: {}
     nodeSelector: {}
+    securityContext: {}
     # tolerations: []
     # podLabels: []
 
@@ -229,6 +236,7 @@ snuba:
     resources: {}
     affinity: {}
     nodeSelector: {}
+    securityContext: {}
     # tolerations: []
     # podLabels: []
 
@@ -238,6 +246,7 @@ snuba:
     resources: {}
     affinity: {}
     nodeSelector: {}
+    securityContext: {}
     # tolerations: []
     # podLabels: []
 
@@ -247,6 +256,7 @@ snuba:
     resources: {}
     affinity: {}
     nodeSelector: {}
+    securityContext: {}
     # tolerations: []
     # podLabels: []
 
@@ -295,7 +305,9 @@ hooks:
   removeOnSuccess: true
   clickhouseInit:
     podAnnotations: {}
-
+    affinity: {}
+    nodeSelector: {}
+    # tolerations: []
   dbCheck:
     image:
       # repository: subfuzion/netcat
@@ -310,7 +322,9 @@ hooks:
       requests:
         cpu: 100m
         memory: 64Mi
-
+    affinity: {}
+    nodeSelector: {}
+    # tolerations: []
   dbInit:
     env: []
     podAnnotations: {}
@@ -321,9 +335,11 @@ hooks:
       requests:
         cpu: 300m
         memory: 2048Mi
-    sidecars: []
-    volumes: []
-
+    sidecars: [ ]
+    volumes: [ ]
+    affinity: {}
+    nodeSelector: {}
+    # tolerations: []
   snubaInit:
     env: []
     kafka: false
@@ -335,6 +351,9 @@ hooks:
       requests:
         cpu: 250m
         memory: 256Mi
+    affinity: {}
+    nodeSelector: {}
+    # tolerations: []
 
 system:
   ## be sure to include the scheme on the url, for example: "https://sentry.example.com"
@@ -366,6 +385,7 @@ symbolicator:
     resources: {}
     affinity: {}
     nodeSelector: {}
+    securityContext: {}
     # tolerations: []
     # podLabels: []
     # priorityClassName: "xxx"
@@ -451,6 +471,9 @@ ingress:
   # If you are using traefik ingress controller, switch this to 'traefik'
   # if you are using AWS ALB Ingress controller, switch this to 'aws-alb'
   regexPathStyle: nginx
+  #If you are using AWS ALB Ingress controller, switch to true if you want activate the http to https redirection.
+  alb:
+    httpRedirect: false
   # annotations:
   #   If you are using nginx ingress controller, please use at least those 2 annotations
   #   kubernetes.io/ingress.class: nginx
@@ -559,6 +582,7 @@ externalClickhouse:
   ##
   host: "clickhouse"
   tcpPort: 9000
+  httpPort: 8123
   username: default
   password: ""
   database: default
@@ -759,6 +783,7 @@ metrics:
   nodeSelector: {}
   tolerations: []
   affinity: {}
+  securityContext: {}
   # schedulerName:
   # Optional extra labels for pod, i.e. redis-client: "true"
   # podLabels: []
