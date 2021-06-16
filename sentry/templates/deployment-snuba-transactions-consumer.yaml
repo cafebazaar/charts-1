@@ -85,6 +85,8 @@ spec:
         {{- else }}
         - --consumer-group
         - snuba-transactions-consumers
+        - --commit-log-topic
+        - snuba-commit-log
         {{- end }}
         - --log-level
         - {{ .Values.snuba.logging.level }}
