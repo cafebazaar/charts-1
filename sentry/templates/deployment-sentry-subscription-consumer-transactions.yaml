@@ -63,6 +63,8 @@ spec:
           - --commit-batch-size {{ default "1" .Values.sentry.subscriptionConsumerTransactions.commitBatchSize }}
           {{- if and (not .Values.kafka.enabled) .Values.externalKafka.topics }}
           - --topic {{ .Values.externalKafka.topics.transactionsSubscriptionResults }}
+          {{- else }}
+          - --topic transactions-subscription-results
           {{- end }}
           {{- if and (not .Values.kafka.enabled) .Values.externalKafka.consumerGroups }}
           - --group {{ .Values.externalKafka.consumerGroups.sentrySubscription }}

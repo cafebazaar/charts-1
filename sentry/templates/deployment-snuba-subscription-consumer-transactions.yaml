@@ -71,6 +71,12 @@ spec:
           - --result-topic={{ .transactionsSubscriptionResults }}
           - --commit-log-topic={{ .commitLog }}
           {{- end }}
+          {{- else }}
+          - --topic=events
+          - --result-topic=transactions-subscription-results
+          - --commit-log-topic=snuba-commit-log
+          - --commit-log-group=snuba-transactions-consumers
+          - --consumer-group=snuba-transactions-subscriptions-consumers
           {{- end }}
           {{- if and (not .Values.kafka.enabled) .Values.externalKafka.consumerGroups }}
           {{- with .Values.externalKafka.consumerGroups }}
