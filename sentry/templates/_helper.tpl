@@ -349,9 +349,9 @@ Set Kafka Confluent hosts
 */}}
 {{- define "sentry.kafka.hosts" -}}
 {{- if .Values.kafka.enabled -}}
-{{- include "sentry.kafka.fullname" . -}}
-{{- else -}}
-{{- required "A valid .Values.externalKafka.hosts is required" .Values.externalKafka.hosts -}}
+{{- template "sentry.kafka.fullname" . -}}
+{{- else if and (.Values.externalKafka) (not (kindIs "slice" .Values.externalKafka)) -}}
+{{ required "A valid .Values.externalKafka.host is required" .Values.externalKafka.host }}
 {{- end -}}
 {{- end -}}
 
@@ -360,20 +360,23 @@ Set Kafka Confluent port
 */}}
 {{- define "sentry.kafka.port" -}}
 {{- if and (.Values.kafka.enabled) (.Values.kafka.service.port) -}}
-{{- .Values.kafka.service.port -}}
-{{- else -}}
-{{- required "A valid .Values.externalKafka.port is required" .Values.externalKafka.port -}}
+{{- .Values.kafka.service.port }}
+{{- else if and (.Values.externalKafka) (not (kindIs "slice" .Values.externalKafka)) -}}
+{{ required "A valid .Values.externalKafka.port is required" .Values.externalKafka.port }}
 {{- end -}}
 {{- end -}}
 
+
 {{/*
-Set Kafka bootstrappers
+Set Kafka bootstrap servers string
 */}}
-{{- define "sentry.kafka.bootstrappers" -}}
-{{- if .Values.kafka.enabled -}}
-{{- printf "%s:%s" (include "sentry.kafka.fullname" .) ($.Values.kafka.service.port | toString) -}}
+{{- define "sentry.kafka.bootstrap_servers_string" -}}
+{{- if or (.Values.kafka.enabled) (not (kindIs "slice" .Values.externalKafka)) -}}
+{{ printf "%s:%s" (include "sentry.kafka.host" .) (include "sentry.kafka.port" .) }}
 {{- else -}}
-{{- range $index, $element := .Values.externalKafka.hosts -}}{{if $index}},{{end}}{{- printf "%s:%s" $element ($.Values.externalKafka.port | toString) -}}{{end}}
+{{- range $index, $elem := .Values.externalKafka -}}
+{{- if $index -}},{{- end -}}{{ printf "%s:%s" $elem.host (toString $elem.port) }}
+{{- end -}}
 {{- end -}}
 {{- end -}}
 
@@ -407,7 +410,7 @@ Common Snuba environment variables
   value: "9125"
 {{- end}}
 - name: DEFAULT_BROKERS
-  value: {{ include "sentry.kafka.bootstrappers" . | quote }}
+  value: {{ include "sentry.kafka.bootstrap_servers_string" . | quote }}
 - name: SENTRY_DSN
   value: {{ .Values.snuba.sentryDsn | quote }}
 - name: CLICKHOUSE_HOST

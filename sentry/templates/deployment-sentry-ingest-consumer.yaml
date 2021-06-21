@@ -75,6 +75,10 @@ spec:
           - "--consumer-group"
           - "{{ .Values.externalKafka.consumerGroups.ingestConsumer }}"
           {{- end }}
+          {{- if .Values.sentry.ingestConsumer.maxBatchSize }}
+          - "--max-batch-size"
+          - "{{ .Values.sentry.ingestConsumer.maxBatchSize }}"
+          {{- end }}
         env:
         - name: SNUBA
           value: http://{{ template "sentry.fullname" . }}-snuba:{{ template "snuba.port" }}

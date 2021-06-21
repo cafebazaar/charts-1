@@ -1,7 +1,6 @@
 {{- $redisHost := include "sentry.redis.host" . -}}
 {{- $redisPort := include "sentry.redis.port" . -}}
 {{- $redisPass := include "sentry.redis.password" . -}}
-{{- $kafkaBootstrappers := include "sentry.kafka.bootstrappers" . -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -258,7 +257,7 @@ data:
     {{- end }}
 
     DEFAULT_KAFKA_OPTIONS = {
-        "bootstrap.servers": "{{ $kafkaBootstrappers }}",
+        "bootstrap.servers": {{ (include "sentry.kafka.bootstrap_servers_string" .) | quote }},
         "message.max.bytes": 50000000,
         "socket.timeout.ms": 1000,
     }
@@ -336,7 +335,7 @@ data:
         "uwsgi-socket": None,
         "so-keepalive": True,
         # Keep this between 15s-75s as that's what Relay supports
-        "http-keepalive": 60,
+        "http-keepalive": True,
         "http-chunked-input": True,
         # the number of web workers
         "workers": 3,

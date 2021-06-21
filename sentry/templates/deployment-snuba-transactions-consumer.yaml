@@ -71,6 +71,10 @@ spec:
         - --auto-offset-reset=latest
         - --max-batch-time-ms
         - "750"
+        {{- if .Values.snuba.transactionsConsumer.maxBatchSize }}
+        - "--max-batch-size"
+        - "{{ .Values.snuba.transactionsConsumer.maxBatchSize }}"
+        {{- end }}
         {{- if and (not .Values.kafka.enabled) .Values.externalKafka.topics }}
         {{- with .Values.externalKafka.topics }}
         - --raw-events-topic

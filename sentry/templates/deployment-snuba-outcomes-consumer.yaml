@@ -69,8 +69,8 @@ spec:
         - --storage
         - outcomes_raw
         - --auto-offset-reset=latest
-        - --max-batch-size
-        -  "3"
+        - --max-batch-size 
+        - "{{ default "3" .Values.snuba.outcomesConsumer.maxBatchSize }}"
         {{- if and (not .Values.kafka.enabled) .Values.externalKafka.topics }}
         {{- with .Values.externalKafka.topics }}
         - --raw-events-topic
