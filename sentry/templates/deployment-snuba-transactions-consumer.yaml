@@ -94,6 +94,14 @@ spec:
         {{- end }}
         - --log-level
         - {{ .Values.snuba.logging.level }}
+        {{- if .Values.snuba.transactionsConsumer.processes }}
+        - --processes
+        - {{ .Values.snuba.transactionsConsumer.processes | quote }}
+        - --input-block-size
+        - {{ required "A valid .Values.transactionsConsumer.inputBlockSize is required" .Values.snuba.transactionsConsumer.inputBlockSize | quote }}
+        - --output-block-size
+        - {{ required "A valid .Values.transactionsConsumer.outputBlockSize is required" .Values.snuba.transactionsConsumer.outputBlockSize | quote }}
+        {{- end }}
         ports:
         - containerPort: {{ template "snuba.port" }}
         env:

@@ -89,6 +89,14 @@ spec:
         {{- end }}
         - --log-level
         - {{ .Values.snuba.logging.level }}
+        {{- if .Values.snuba.consumer.processes }}
+        - --processes
+        - {{ .Values.snuba.consumer.processes | quote }}
+        - --input-block-size
+        - {{ required "A valid .Values.consumer.inputBlockSize is required" .Values.snuba.consumer.inputBlockSize | quote }}
+        - --output-block-size
+        - {{ required "A valid .Values.consumer.outputBlockSize is required" .Values.snuba.consumer.outputBlockSize | quote }}
+        {{- end }}
         ports:
         - containerPort: {{ template "snuba.port" }}
         env:

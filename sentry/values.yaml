@@ -225,6 +225,9 @@ snuba:
     # tolerations: []
     # podLabels: []
     # maxBatchSize: ""
+    # processes: 4
+    # inputBlockSize: "50000000"
+    # outputBlockSize: "50000000"
 
   outcomesConsumer:
     replicas: 1
@@ -236,6 +239,9 @@ snuba:
     # tolerations: []
     # podLabels: []
     maxBatchSize: "3"
+    # processes: 4
+    # inputBlockSize: "50000000"
+    # outputBlockSize: "50000000"
 
   replacer:
     replicas: 1
@@ -258,6 +264,9 @@ snuba:
     # tolerations: []
     # podLabels: []
     # maxBatchSize: ""
+    # processes: 4
+    # inputBlockSize: "50000000"
+    # outputBlockSize: "50000000"
 
   transactionsConsumer:
     replicas: 1
@@ -269,6 +278,9 @@ snuba:
     # tolerations: []
     # podLabels: []
     # maxBatchSize: ""
+    # processes: 4
+    # inputBlockSize: "50000000"
+    # outputBlockSize: "50000000"
 
   subscriptionConsumerEvents:
     replicas: 1
