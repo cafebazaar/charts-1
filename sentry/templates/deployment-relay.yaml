@@ -84,10 +84,10 @@ spec:
           image: "{{ template "relay.image" . }}"
           imagePullPolicy: {{ default "IfNotPresent" .Values.images.sentry.pullPolicy }}
           ports:
-            - containerPort: {{ template "relay.port" }}
+          - containerPort: {{ template "relay.port" }}
           env:
-            - name: RELAY_PORT
-              value: '{{ template "relay.port" }}'
+          - name: RELAY_PORT
+            value: '{{ template "relay.port" }}'
   {{- if .Values.relay.env }}
   {{ toYaml .Values.relay.env | indent 8 }}
   {{- end }}
@@ -99,30 +99,33 @@ spec:
               subPath: config.yml
               readOnly: true
           livenessProbe:
-            failureThreshold: 5
+            failureThreshold: {{ .Values.relay.probeFailureThreshold }}
             httpGet:
-              path: /api/relay/healthcheck/live/
+              path: {{ template "relay.healthCheck.requestPath" }}
               port: {{ template "relay.port" }}
               scheme: HTTP
             initialDelaySeconds: {{ .Values.relay.probeInitialDelaySeconds }}
-            periodSeconds: 10
-            successThreshold: 1
-            timeoutSeconds: 2
+            periodSeconds: {{ .Values.relay.probePeriodSeconds }}
+            successThreshold: {{ .Values.relay.probeSuccessThreshold }}
+            timeoutSeconds: {{ .Values.relay.probeTimeoutSeconds }}
           readinessProbe:
-            failureThreshold: 10
+            failureThreshold: {{ .Values.relay.probeFailureThreshold }}
             httpGet:
-              path: /api/relay/healthcheck/ready/
+              path: {{ template "relay.healthCheck.requestPath" }}
               port: {{ template "relay.port" }}
               scheme: HTTP
             initialDelaySeconds: {{ .Values.relay.probeInitialDelaySeconds }}
-            periodSeconds: 10
-            successThreshold: 1
-            timeoutSeconds: 2
+            periodSeconds: {{ .Values.relay.probePeriodSeconds }}
+            successThreshold: {{ .Values.relay.probeSuccessThreshold }}
+            timeoutSeconds: {{ .Values.relay.probeTimeoutSeconds }}
           resources:
 {{ toYaml .Values.relay.resources | indent 12 }}
 {{- if .Values.relay.sidecars }}
 {{ toYaml .Values.relay.sidecars | indent 6 }}
 {{- end }}
+      {{- if .Values.serviceAccount.enabled }}
+      serviceAccountName: {{ .Values.serviceAccount.name }}-relay
+      {{- end }}
       volumes:
       - name: config
         configMap:

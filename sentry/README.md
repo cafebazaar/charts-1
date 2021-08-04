@@ -39,7 +39,7 @@ Parameter                          | Description                                
 `user.email` | Admin user email | `admin@sentry.local`
 `user.password` | Admin user password| `aaaa`
 `ingress.enabled` | Enabling Ingress | `false`
-`ingress.regexPathStyle` | Allows setting the style the regex paths are rendered in the ingress for the ingress controller in use. Possible values are `nginx`, `aws-alb` and `traefik` | `nginx`
+`ingress.regexPathStyle` | Allows setting the style the regex paths are rendered in the ingress for the ingress controller in use. Possible values are `nginx`, `aws-alb`, `gke` and `traefik` | `nginx`
 `nginx.enabled` | Enabling NGINX | `true`
 `metrics.enabled`| if `true`, enable Prometheus metrics | `false`
 `metrics.image.repository`         | Metrics exporter image repository                                                                          | `prom/statsd-exporter`
@@ -63,6 +63,10 @@ Parameter                          | Description                                
 `metrics.serviceMonitor.honorLabels` | honorLabels chooses the metric's labels on collisions with target labels. | `false`
 `metrics.serviceMonitor.namespace` | namespace where servicemonitor resource should be created | `the same namespace as sentry`
 `metrics.serviceMonitor.scrapeInterval` | interval between Prometheus scraping | `30s`
+`serviceAccount.annotations` |  Additional Service Account annotations. | `{}`
+`serviceAccount.enabled` | If `true`, a custom Service Account will be used. | `false`
+`serviceAccount.name` | The base name of the ServiceAccount to use. Will be appended with e.g. `snuba` or `web` for the pods accordingly. | `"sentry"`
+`serviceAccount.automountServiceAccountToken` | Automount API credentials for a Service Account. | `true`
 `system.secretKey` | secret key for the session cookie ([documentation](https://develop.sentry.dev/config/#general)) | `nil`
 `sentry.features.vstsLimitedScopes` | Disables the azdo-integrations with limited scopes that is the cause of so much pain | `true`
 `sentry.web.customCA.secretName` | Allows mounting a custom CA secret | `nil`

@@ -71,6 +71,18 @@ spec:
         - --auto-offset-reset=latest
         - --max-batch-size 
         - "{{ default "3" .Values.snuba.outcomesConsumer.maxBatchSize }}"
+        {{- if .Values.snuba.replacer.maxBatchTimeMs }}
+        - "--max-batch-time-ms"
+        - "{{ .Values.snuba.replacer.maxBatchTimeMs }}"
+        {{- end }}
+        {{- if .Values.snuba.replacer.queuedMaxMessagesKbytes }}
+        - "--queued-max-messages-kbytes"
+        - "{{ .Values.snuba.replacer.queuedMaxMessagesKbytes }}"
+        {{- end }}
+        {{- if .Values.snuba.replacer.queuedMinMessages }}
+        - "--queued-min-messages"
+        - "{{ .Values.snuba.replacer.queuedMinMessages }}"
+        {{- end }}
         {{- if and (not .Values.kafka.enabled) .Values.externalKafka.topics }}
         {{- with .Values.externalKafka.topics }}
         - --replacements-topic
@@ -97,6 +109,9 @@ spec:
           readOnly: true
         resources:
 {{ toYaml .Values.snuba.replacer.resources | indent 10 }}
+      {{- if .Values.serviceAccount.enabled }}
+      serviceAccountName: {{ .Values.serviceAccount.name }}-snuba
+      {{- end }}
       volumes:
         - name: config
           configMap:

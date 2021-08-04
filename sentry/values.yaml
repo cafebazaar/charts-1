@@ -33,11 +33,25 @@ images:
     # pullPolicy: IfNotPresent
     imagePullSecrets: []
 
+serviceAccount:
+  # serviceAccount.annotations -- Additional Service Account annotations.
+  annotations: {}
+  # serviceAccount.enabled -- If `true`, a custom Service Account will be used.
+  enabled: false
+  # serviceAccount.name -- The base name of the ServiceAccount to use. Will be appended with e.g. `snuba-api` or `web` for the pods accordingly.
+  name: "sentry"
+  # serviceAccount.automountServiceAccountToken -- Automount API credentials for a Service Account.
+  automountServiceAccountToken: true
+
 relay:
   replicas: 1
   mode: managed
   env: []
+  probeFailureThreshold: 5
   probeInitialDelaySeconds: 10
+  probePeriodSeconds: 10
+  probeSuccessThreshold: 1
+  probeTimeoutSeconds: 2
   resources: {}
   affinity: {}
   nodeSelector: {}
@@ -71,7 +85,11 @@ sentry:
     strategyType: RollingUpdate
     replicas: 1
     env: []
+    probeFailureThreshold: 5
     probeInitialDelaySeconds: 10
+    probePeriodSeconds: 10
+    probeSuccessThreshold: 1
+    probeTimeoutSeconds: 2
     resources: {}
     affinity: {}
     nodeSelector: {}
@@ -130,8 +148,12 @@ sentry:
       minReplicas: 1
       maxReplicas: 3
       targetCPUUtilizationPercentage: 50
-    sidecars: []
-    volumes: []
+    sidecars: [ ]
+    volumes: [ ]
+
+    # volumeMounts:
+    #   - mountPath: /dev/shm
+    #     name: dshm
 
   cron:
     replicas: 1
@@ -228,6 +250,17 @@ snuba:
     # processes: 4
     # inputBlockSize: "50000000"
     # outputBlockSize: "50000000"
+    # maxBatchTimeMs: ""
+    # queuedMaxMessagesKbytes: ""
+    # queuedMinMessages: ""
+
+    # volumeMounts:
+    #   - mountPath: /dev/shm
+    #     name: dshm
+    # volumes:
+    #   - name: dshm
+    #     emptyDir:
+    #       medium: Memory
 
   outcomesConsumer:
     replicas: 1
@@ -242,6 +275,17 @@ snuba:
     # processes: 4
     # inputBlockSize: "50000000"
     # outputBlockSize: "50000000"
+    # maxBatchTimeMs: ""
+    # queuedMaxMessagesKbytes: ""
+    # queuedMinMessages: ""
+
+    # volumeMounts:
+    #   - mountPath: /dev/shm
+    #     name: dshm
+    # volumes:
+    #   - name: dshm
+    #     emptyDir:
+    #       medium: Memory
 
   replacer:
     replicas: 1
@@ -253,6 +297,9 @@ snuba:
     # tolerations: []
     # podLabels: []
     maxBatchSize: "3"
+    # maxBatchTimeMs: ""
+    # queuedMaxMessagesKbytes: ""
+    # queuedMinMessages: ""
 
   sessionsConsumer:
     replicas: 1
@@ -267,6 +314,17 @@ snuba:
     # processes: 4
     # inputBlockSize: "50000000"
     # outputBlockSize: "50000000"
+    # maxBatchTimeMs: ""
+    # queuedMaxMessagesKbytes: ""
+    # queuedMinMessages: ""
+
+    # volumeMounts:
+    #   - mountPath: /dev/shm
+    #     name: dshm
+    # volumes:
+    #   - name: dshm
+    #     emptyDir:
+    #       medium: Memory
 
   transactionsConsumer:
     replicas: 1
@@ -281,6 +339,17 @@ snuba:
     # processes: 4
     # inputBlockSize: "50000000"
     # outputBlockSize: "50000000"
+    # maxBatchTimeMs: ""
+    # queuedMaxMessagesKbytes: ""
+    # queuedMinMessages: ""
+
+    # volumeMounts:
+    #   - mountPath: /dev/shm
+    #     name: dshm
+    # volumes:
+    #   - name: dshm
+    #     emptyDir:
+    #       medium: Memory
 
   subscriptionConsumerEvents:
     replicas: 1
@@ -487,11 +556,16 @@ nginx:
   service:
     type: ClusterIP
     port: 80
+  ## Use this to enable an extra service account
+  # serviceAccount:
+  #   create: false
+  #   name: nginx
 
 ingress:
   enabled: false
   # If you are using traefik ingress controller, switch this to 'traefik'
   # if you are using AWS ALB Ingress controller, switch this to 'aws-alb'
+  # if you are using GKE Ingress controller, switch this to 'gke'
   regexPathStyle: nginx
   #If you are using AWS ALB Ingress controller, switch to true if you want activate the http to https redirection.
   alb:
@@ -597,6 +671,13 @@ clickhouse:
         - "ReadWriteOnce"
         storage: "30Gi"
 
+  ## Use this to enable an extra service account
+  # serviceAccount:
+  #   annotations: {}
+  #   enabled: false
+  #   name: "sentry-clickhouse"
+  #   automountServiceAccountToken: true
+
 ## This value is only used when clickhouse.enabled is set to false
 ##
 externalClickhouse:
@@ -631,6 +712,17 @@ kafka:
 
   service:
     port: 9092
+
+  ## Use this to enable an extra service account
+  # serviceAccount:
+  #   create: false
+  #   name: kafka
+
+  ## Use this to enable an extra service account
+  # zookeeper:
+  #   serviceAccount:
+  #     create: false
+  #     name: zookeeper
 
 ## This value is only used when kafka.enabled is set to false
 ##
@@ -670,6 +762,10 @@ redis:
   master:
     persistence:
       enabled: true
+  ## Use this to enable an extra service account
+  # serviceAccount:
+  #   create: false
+  #   name: sentry-redis
 
 ## This value is only used when redis.enabled is set to false
 ##
@@ -692,6 +788,9 @@ postgresql:
     synchronousCommit: "on"
     numSynchronousReplicas: 1
     applicationName: sentry
+  ## Use this to enable an extra service account
+  # serviceAccount:
+  #   enabled: false
 
 ## This value is only used when postgresql.enabled is set to false
 ##
@@ -768,7 +867,10 @@ rabbitmq:
     existingSecret: load-definition
   extraConfiguration: |
     load_definitions = /app/load_definition.json
-
+  ## Use this to enable an extra service account
+  # serviceAccount:
+  #   create: false
+  #   name: rabbitmq
 
 ## Prometheus Exporter / Metrics
 ##

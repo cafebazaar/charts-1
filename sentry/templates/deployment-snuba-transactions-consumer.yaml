@@ -69,11 +69,21 @@ spec:
         - --storage
         - transactions
         - --auto-offset-reset=latest
-        - --max-batch-time-ms
-        - "750"
+        {{- if .Values.snuba.transactionsConsumer.maxBatchTimeMs }}
+        - "--max-batch-time-ms"
+        - "{{ .Values.snuba.transactionsConsumer.maxBatchTimeMs }}"
+        {{- end }}
         {{- if .Values.snuba.transactionsConsumer.maxBatchSize }}
         - "--max-batch-size"
         - "{{ .Values.snuba.transactionsConsumer.maxBatchSize }}"
+        {{- end }}
+        {{- if .Values.snuba.transactionsConsumer.queuedMaxMessagesKbytes }}
+        - "--queued-max-messages-kbytes"
+        - "{{ .Values.snuba.transactionsConsumer.queuedMaxMessagesKbytes }}"
+        {{- end }}
+        {{- if .Values.snuba.transactionsConsumer.queuedMinMessages }}
+        - "--queued-min-messages"
+        - "{{ .Values.snuba.transactionsConsumer.queuedMinMessages }}"
         {{- end }}
         {{- if and (not .Values.kafka.enabled) .Values.externalKafka.topics }}
         {{- with .Values.externalKafka.topics }}
@@ -116,9 +126,18 @@ spec:
         - mountPath: /etc/snuba
           name: config
           readOnly: true
+{{- if .Values.snuba.transactionsConsumer.volumeMounts }}
+{{ toYaml .Values.snuba.transactionsConsumer.volumeMounts | indent 8 }}
+{{- end }}
         resources:
 {{ toYaml .Values.snuba.transactionsConsumer.resources | indent 10 }}
+      {{- if .Values.serviceAccount.enabled }}
+      serviceAccountName: {{ .Values.serviceAccount.name }}-snuba
+      {{- end }}
       volumes:
         - name: config
           configMap:
             name: {{ template "sentry.fullname" . }}-snuba
+{{- if .Values.snuba.transactionsConsumer.volumes }}
+{{ toYaml .Values.snuba.transactionsConsumer.volumes | indent 8 }}
+{{- end }}

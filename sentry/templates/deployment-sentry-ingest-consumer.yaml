@@ -75,6 +75,10 @@ spec:
           - "--consumer-group"
           - "{{ .Values.externalKafka.consumerGroups.ingestConsumer }}"
           {{- end }}
+          {{- if .Values.sentry.ingestConsumer.concurrency }}
+          - "--concurrency"
+          - "{{ .Values.sentry.ingestConsumer.concurrency }}"
+          {{- end }}
           {{- if .Values.sentry.ingestConsumer.maxBatchSize }}
           - "--max-batch-size"
           - "{{ .Values.sentry.ingestConsumer.maxBatchSize }}"
@@ -113,11 +117,17 @@ spec:
         - name: sentry-google-cloud-key
           mountPath: /var/run/secrets/google
         {{ end }}
+{{- if .Values.sentry.ingestConsumer.volumeMounts }}
+{{ toYaml .Values.sentry.ingestConsumer.volumeMounts | indent 8 }}
+{{- end }}
         resources:
 {{ toYaml .Values.sentry.ingestConsumer.resources | indent 10 }}
 {{- if .Values.sentry.ingestConsumer.sidecars }}
 {{ toYaml .Values.sentry.ingestConsumer.sidecars | indent 6 }}
 {{- end }}
+      {{- if .Values.serviceAccount.enabled }}
+      serviceAccountName: {{ .Values.serviceAccount.name }}-ingest-consumer
+      {{- end }}
       volumes:
       - name: config
         configMap:
