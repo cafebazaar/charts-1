@@ -72,6 +72,8 @@ spec:
         env:
         - name: SNUBA
           value: {{ template "snuba.api" . }}
+        - name: METRICS_PREFIX
+          value: "web"
         - name: SENTRY_LOG_LEVEL
           value: {{ .Values.sentry.logging.level | default "INFO" | quote }}
         {{- if .Values.postgresql.enabled }}

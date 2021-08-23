@@ -87,6 +87,8 @@ spec:
         env:
         - name: SNUBA
           value: http://{{ template "sentry.fullname" . }}-snuba:{{ template "snuba.port" }}
+        - name: METRICS_PREFIX
+          value: "postprocess_forwarder"
         - name: SENTRY_LOG_LEVEL
           value: {{ .Values.sentry.logging.level | default "INFO" | quote }}
         {{- if .Values.postgresql.enabled }}

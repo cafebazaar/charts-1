@@ -66,6 +66,8 @@ spec:
           value: {{ .Values.sentry.logging.level | default "INFO" | quote }}
         - name: C_FORCE_ROOT
           value: "true"
+        - name: METRICS_PREFIX
+          value: "cron"
         {{- if .Values.postgresql.enabled }}
         - name: POSTGRES_PASSWORD
           valueFrom:
