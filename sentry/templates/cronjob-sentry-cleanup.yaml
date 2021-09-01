@@ -52,6 +52,9 @@ spec:
               - "cleanup"
               - "--days"
               - "{{ .Values.sentry.eventRetentionDays }}"
+              {{- if .Values.sentry.cleanup.timed }}
+              - "--timed"
+              {{ end }}
             env:
             - name: SNUBA
               value: http://{{ template "sentry.fullname" . }}-snuba:{{ template "snuba.port" }}

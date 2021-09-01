@@ -193,6 +193,7 @@ sentry:
     
   cleanup:
     enabled: true
+    timed: true
     resources: {}
     schedule: "0 0 * * *"
     sidecars: []
