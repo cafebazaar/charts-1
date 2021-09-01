@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ template "sentry.fullname" . }}-ingest-consumer
+  name: {{ template "sentry.fullname" . }}-ingest-consumer-attachments
   labels:
     app: {{ template "sentry.fullname" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
@@ -22,7 +22,7 @@ spec:
     matchLabels:
       app: {{ template "sentry.fullname" . }}
       release: "{{ .Release.Name }}"
-      role: ingest-consumer
+      role: ingest-consumer-attachments
 {{- if not .Values.sentry.ingestConsumer.autoscaling.enabled }}
   replicas: {{ .Values.sentry.ingestConsumer.replicas }}
 {{- end }}
@@ -38,7 +38,7 @@ spec:
       labels:
         app: {{ template "sentry.fullname" . }}
         release: "{{ .Release.Name }}"
-        role: ingest-consumer
+        role: ingest-consumer-attachments
         {{- if .Values.sentry.ingestConsumer.podLabels }}
 {{ toYaml .Values.sentry.ingestConsumer.podLabels | indent 8 }}
         {{- end }}
@@ -64,13 +64,14 @@ spec:
 {{ toYaml .Values.sentry.ingestConsumer.securityContext | indent 8 }}
       {{- end }}
       containers:
-      - name: {{ .Chart.Name }}-ingest-consumer
+      - name: {{ .Chart.Name }}-ingest-consumer-attachments
         image: "{{ template "sentry.image" . }}"
         imagePullPolicy: {{ default "IfNotPresent" .Values.images.sentry.pullPolicy }}
         args:
           - "run"
           - "ingest-consumer"
-          - "--all-consumer-types"
+          - "--consumer-type"
+          - "attachments"
           {{- if and (not .Values.kafka.enabled) .Values.externalKafka.consumerGroups }}
           - "--consumer-group"
           - "{{ .Values.externalKafka.consumerGroups.ingestConsumer }}"
