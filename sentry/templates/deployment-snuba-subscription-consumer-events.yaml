@@ -83,6 +83,9 @@ spec:
           - --commit-log-group={{ .commitLog }}
           {{- end }}
           {{- end }}
+          {{- if .Values.snuba.subscriptionConsumerEvents.maxQueryWorkers }}
+          - --max-query-workers={{ .Values.snuba.subscriptionConsumerEvents.maxQueryWorkers }}
+          {{- end }}
           - --log-level
           - {{ .Values.snuba.logging.level }}
         ports:

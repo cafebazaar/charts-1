@@ -358,6 +358,7 @@ snuba:
     resources: {}
     affinity: {}
     nodeSelector: {}
+    # maxQueryWorkers: 8
     # tolerations: []
     # podLabels: []
 
@@ -367,6 +368,7 @@ snuba:
     resources: {}
     affinity: {}
     nodeSelector: {}
+    # maxQueryWorkers: 8
     # tolerations: []
     # podLabels: []
 

@@ -84,6 +84,9 @@ spec:
           - --commit-log-group={{ .transactionCommitLog }}
           {{- end }}
           {{- end }}
+          {{- if .Values.snuba.subscriptionConsumerTransactions.maxQueryWorkers }}
+          - --max-query-workers={{ .Values.snuba.subscriptionConsumerTransactions.maxQueryWorkers }}
+          {{- end }}
           - --log-level
           - {{ .Values.snuba.logging.level }}
         ports:
