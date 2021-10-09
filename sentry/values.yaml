@@ -921,7 +921,7 @@ metrics:
 
   image:
     repository: prom/statsd-exporter
-    tag: v0.20.0
+    tag: v0.22.2
     pullPolicy: IfNotPresent
 
   # Enable this if you're using https://github.com/coreos/prometheus-operator
