@@ -469,6 +469,7 @@ mail:
   port: 25
   host: ""
   from: ""
+  listNamespace: ""
 
 symbolicator:
   enabled: false
