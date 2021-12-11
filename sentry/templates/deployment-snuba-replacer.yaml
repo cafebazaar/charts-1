@@ -95,10 +95,6 @@ spec:
         - "--queued-max-messages-kbytes"
         - "{{ .Values.snuba.replacer.queuedMaxMessagesKbytes }}"
         {{- end }}
-        {{- if .Values.snuba.replacer.queuedMinMessages }}
-        - "--queued-min-messages"
-        - "{{ .Values.snuba.replacer.queuedMinMessages }}"
-        {{- end }}
         {{- if and (not .Values.kafka.enabled) .Values.externalKafka.topics }}
         {{- with .Values.externalKafka.topics }}
         - --replacements-topic
