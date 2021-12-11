@@ -29,7 +29,7 @@ images:
     imagePullSecrets: []
   symbolicator:
     # repository: getsentry/symbolicator
-    tag: 0.3.3
+    tag: 0.3.4
     # pullPolicy: IfNotPresent
     imagePullSecrets: []
 
@@ -127,8 +127,13 @@ sentry:
       minReplicas: 2
       maxReplicas: 5
       targetCPUUtilizationPercentage: 50
-    sidecars: []
-    volumes: []
+    livenessProbe:
+      enabled: false
+      periodSeconds: 60
+      timeoutSeconds: 10
+      failureThreshold: 3
+    sidecars: [ ]
+    volumes: [ ]
 
   ingestConsumer:
     replicas: 1
@@ -247,6 +252,7 @@ snuba:
     securityContext: {}
     # tolerations: []
     # podLabels: []
+    autoOffsetReset: "earliest"
     # maxBatchSize: ""
     # processes: 4
     # inputBlockSize: "50000000"
@@ -272,6 +278,7 @@ snuba:
     securityContext: {}
     # tolerations: []
     # podLabels: []
+    autoOffsetReset: "earliest"
     maxBatchSize: "3"
     # processes: 4
     # inputBlockSize: "50000000"
@@ -297,10 +304,33 @@ snuba:
     securityContext: {}
     # tolerations: []
     # podLabels: []
+    autoOffsetReset: "earliest"
     maxBatchSize: "3"
     # maxBatchTimeMs: ""
     # queuedMaxMessagesKbytes: ""
     # queuedMinMessages: ""
+
+  subscriptionConsumerEvents:
+    replicas: 1
+    env: []
+    resources: {}
+    affinity: {}
+    nodeSelector: {}
+    securityContext: {}
+    # tolerations: []
+    # podLabels: []
+    autoOffsetReset: "earliest"
+
+  subscriptionConsumerTransactions:
+    replicas: 1
+    env: []
+    resources: {}
+    affinity: {}
+    nodeSelector: {}
+    securityContext: {}
+    # tolerations: []
+    # podLabels: []
+    autoOffsetReset: "earliest"
 
   sessionsConsumer:
     replicas: 1
@@ -311,6 +341,7 @@ snuba:
     securityContext: {}
     # tolerations: []
     # podLabels: []
+    autoOffsetReset: "earliest"
     # maxBatchSize: ""
     # processes: 4
     # inputBlockSize: "50000000"
@@ -336,6 +367,7 @@ snuba:
     securityContext: {}
     # tolerations: []
     # podLabels: []
+    autoOffsetReset: "earliest"
     # maxBatchSize: ""
     # processes: 4
     # inputBlockSize: "50000000"
@@ -464,6 +496,7 @@ system:
 mail:
   backend: dummy # smtp
   useTls: false
+  useSsl: false
   username: ""
   password: ""
   port: 25
@@ -580,6 +613,7 @@ ingress:
   #   nginx.ingress.kubernetes.io/use-regex: "true"
   #
   # hostname:
+  # additionalHostNames: []
   #
   # tls:
   # - secretName:
@@ -617,6 +651,10 @@ filestore:
       ## if you plan on having the web, worker and cron deployments run on
       ## different nodes.
       persistentWorkers: false
+
+      ## If existingClaim is specified, no PVC will be created and this claim will
+      ## be used
+      existingClaim: ""
 
   gcs: {}
     ## Point this at a pre-configured secret containing a service account. The resulting
@@ -759,6 +797,9 @@ externalKafka:
 
 redis:
   enabled: true
+  auth:
+    enabled: false
+    sentinel: false
   nameOverride: sentry-redis
   usePassword: false
   ## Just omit the password field if your redis cluster doesn't use password
@@ -938,3 +979,9 @@ metrics:
     # honorLabels: true
 
 revisionHistoryLimit: 10
+
+# dnsPolicy: "ClusterFirst"
+# dnsConfig:
+#   nameservers: []
+#   searches: []
+#   options: []

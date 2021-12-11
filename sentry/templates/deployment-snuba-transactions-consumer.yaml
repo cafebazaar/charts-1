@@ -56,6 +56,13 @@ spec:
       imagePullSecrets:
 {{ toYaml .Values.images.snuba.imagePullSecrets | indent 8 }}
       {{- end }}
+      {{- if .Values.dnsPolicy }}
+      dnsPolicy: {{ .Values.dnsPolicy | quote }}
+      {{- end }}
+      {{- if .Values.dnsConfig }}
+      dnsConfig:
+{{ toYaml .Values.dnsConfig | indent 8 }}
+      {{- end }}
       {{- if .Values.snuba.transactionsConsumer.securityContext }}
       securityContext:
 {{ toYaml .Values.snuba.transactionsConsumer.securityContext | indent 8 }}
@@ -68,7 +75,8 @@ spec:
         - consumer
         - --storage
         - transactions
-        - --auto-offset-reset=latest
+        - "--auto-offset-reset"
+        - "{{ .Values.snuba.transactionsConsumer.autoOffsetReset }}"
         {{- if .Values.snuba.transactionsConsumer.maxBatchTimeMs }}
         - "--max-batch-time-ms"
         - "{{ .Values.snuba.transactionsConsumer.maxBatchTimeMs }}"

@@ -42,6 +42,13 @@ spec:
       {{- if .Values.metrics.schedulerName }}
       schedulerName: "{{ .Values.metrics.schedulerName }}"
       {{- end }}
+      {{- if .Values.dnsPolicy }}
+      dnsPolicy: {{ .Values.dnsPolicy | quote }}
+      {{- end }}
+      {{- if .Values.dnsConfig }}
+      dnsConfig:
+{{ toYaml .Values.dnsConfig | indent 8 }}
+      {{- end }}
       {{- if .Values.metrics.securityContext }}
       securityContext:
 {{ toYaml .Values.metrics.securityContext | indent 8 }}
@@ -85,6 +92,6 @@ spec:
         resources:
 {{ toYaml .Values.metrics.resources | indent 10 }}
       {{- if .Values.serviceAccount.enabled }}
-      serviceAccountName: {{ .Values.serviceAccount.name }}
+      serviceAccountName: {{ .Values.serviceAccount.name }}-metrics
       {{- end }}
 {{- end }}

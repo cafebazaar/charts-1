@@ -17,6 +17,7 @@ metadata:
     "helm.sh/hook-weight": "10"
   {{- end }}
 spec:
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
   selector:
     matchLabels:
         app: sentry
@@ -29,6 +30,9 @@ spec:
         checksum/configYml: {{ .Values.config.configYml | toYaml | toString | sha256sum }}
         checksum/sentryConfPy: {{ .Values.config.sentryConfPy | sha256sum }}
         checksum/config.yaml: {{ include (print $.Template.BasePath "/configmap-sentry.yaml") . | sha256sum }}
+        {{- if .Values.sentry.subscriptionConsumerEvents.annotations }}
+{{ toYaml .Values.sentry.subscriptionConsumerEvents.annotations | indent 8 }}
+        {{- end }}
       labels:
         app: sentry
         release: "{{ .Release.Name }}"
@@ -52,6 +56,10 @@ spec:
       {{- if .Values.images.sentry.imagePullSecrets }}
       imagePullSecrets:
 {{ toYaml .Values.images.sentry.imagePullSecrets | indent 8 }}
+      {{- end }}
+      {{- if .Values.sentry.subscriptionConsumerEvents.securityContext }}
+      securityContext:
+{{ toYaml .Values.sentry.subscriptionConsumerEvents.securityContext | indent 8 }}
       {{- end }}
       containers:
       - name: {{ .Chart.Name }}-subscription-consumer-events
@@ -104,15 +112,26 @@ spec:
           mountPath: /var/run/secrets/google
         {{ end }}
         resources:
-{{ toYaml .Values.sentry.subscriptionConsumerEvents.resources | indent 10 }}
+{{ toYaml .Values.sentry.subscriptionConsumerEvents.resources | indent 12 }}
+{{- if .Values.sentry.subscriptionConsumerEvents.sidecars }}
+{{ toYaml .Values.sentry.subscriptionConsumerEvents.sidecars | indent 6 }}
+{{- end }}
+      {{- if .Values.serviceAccount.enabled }}
+      serviceAccountName: {{ .Values.serviceAccount.name }}-subscription-consumer-events
+      {{- end }}
       volumes:
       - name: config
         configMap:
           name: {{ template "sentry.fullname" . }}-sentry
       - name: sentry-data
       {{- if and (eq .Values.filestore.backend "filesystem") .Values.filestore.filesystem.persistence.enabled (.Values.filestore.filesystem.persistence.persistentWorkers) }}
+      {{- if .Values.filestore.filesystem.persistence.existingClaim }}
+        persistentVolumeClaim:
+          claimName: {{ .Values.filestore.filesystem.persistence.existingClaim }}
+      {{- else }}
         persistentVolumeClaim:
           claimName: {{ template "sentry.fullname" . }}-data
+      {{- end }}
       {{- else }}
         emptyDir: {}
       {{ end }}
@@ -121,6 +140,9 @@ spec:
         secret:
           secretName: {{ .Values.filestore.gcs.secretName }}
       {{ end }}
+{{- if .Values.sentry.subscriptionConsumerEvents.volumes }}
+{{ toYaml .Values.sentry.subscriptionConsumerEvents.volumes | indent 6 }}
+{{- end }}
       {{- if .Values.sentry.subscriptionConsumerEvents.priorityClassName }}
       priorityClassName: "{{ .Values.sentry.subscriptionConsumerEvents.priorityClassName }}"
       {{- end }}

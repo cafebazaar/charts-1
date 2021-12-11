@@ -52,6 +52,13 @@ spec:
       imagePullSecrets:
 {{ toYaml .Values.images.sentry.imagePullSecrets | indent 8 }}
       {{- end }}
+      {{- if .Values.dnsPolicy }}
+      dnsPolicy: {{ .Values.dnsPolicy | quote }}
+      {{- end }}
+      {{- if .Values.dnsConfig }}
+      dnsConfig:
+{{ toYaml .Values.dnsConfig | indent 8 }}
+      {{- end }}
       {{- if .Values.sentry.web.securityContext }}
       securityContext:
 {{ toYaml .Values.sentry.web.securityContext | indent 8 }}
@@ -145,8 +152,13 @@ spec:
           name: {{ template "sentry.fullname" . }}-sentry
       - name: sentry-data
       {{- if and (eq .Values.filestore.backend "filesystem") .Values.filestore.filesystem.persistence.enabled }}
+      {{- if .Values.filestore.filesystem.persistence.existingClaim }}
+        persistentVolumeClaim:
+          claimName: {{ .Values.filestore.filesystem.persistence.existingClaim }}
+      {{- else }}
         persistentVolumeClaim:
           claimName: {{ template "sentry.fullname" . }}-data
+      {{- end }}
       {{- else }}
         emptyDir: {}
       {{ end }}

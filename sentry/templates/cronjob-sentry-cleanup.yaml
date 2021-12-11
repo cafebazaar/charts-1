@@ -40,6 +40,13 @@ spec:
           tolerations:
 {{ toYaml .Values.sentry.cleanup.tolerations | indent 12 }}
             {{- end }}
+            {{- if .Values.dnsPolicy }}
+          dnsPolicy: {{ .Values.dnsPolicy | quote }}
+            {{- end }}
+            {{- if .Values.dnsConfig }}
+          dnsConfig:
+{{ toYaml .Values.dnsConfig | indent 12 }}
+            {{- end }}
             {{- if .Values.images.sentry.imagePullSecrets }}
           imagePullSecrets:
 {{ toYaml .Values.images.sentry.imagePullSecrets | indent 12 }}
@@ -71,11 +78,11 @@ spec:
                   name: {{ default (include "sentry.postgresql.fullname" .) .Values.postgresql.existingSecret }}
                   key: {{ default "postgresql-password" .Values.postgresql.existingSecretKey }}
             {{- end }}
-            {{ if and (eq .Values.filestore.backend "gcs") .Values.filestore.gcs.secretName }}
+            {{- if and (eq .Values.filestore.backend "gcs") .Values.filestore.gcs.secretName }}
             - name: GOOGLE_APPLICATION_CREDENTIALS
               value: /var/run/secrets/google/{{ .Values.filestore.gcs.credentialsFile }}
-            {{ end }}
-{{- if .Values.sentry.cleanup.env }}
+            {{- end }}
+            {{- if .Values.sentry.cleanup.env }}
 {{ toYaml .Values.sentry.cleanup.env | indent 12 }}
 {{- end }}
             envFrom:
@@ -103,8 +110,13 @@ spec:
               name: {{ template "sentry.fullname" . }}-sentry
           - name: sentry-data
           {{- if and (eq .Values.filestore.backend "filesystem") .Values.filestore.filesystem.persistence.enabled (.Values.filestore.filesystem.persistence.persistentWorkers) }}
+          {{- if .Values.filestore.filesystem.persistence.existingClaim }}
+            persistentVolumeClaim:
+              claimName: {{ .Values.filestore.filesystem.persistence.existingClaim }}
+          {{- else }}
             persistentVolumeClaim:
               claimName: {{ template "sentry.fullname" . }}-data
+          {{- end }}
           {{- else }}
             emptyDir: {}
           {{ end }}

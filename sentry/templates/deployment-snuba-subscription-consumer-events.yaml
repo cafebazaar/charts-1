@@ -14,14 +14,15 @@ metadata:
     meta.helm.sh/release-name: "{{ .Release.Name }}"
     meta.helm.sh/release-namespace: "{{ .Release.Namespace }}"
     "helm.sh/hook": "post-install,post-upgrade"
-    "helm.sh/hook-weight": "16"
+    "helm.sh/hook-weight": "18"
   {{- end }}
 spec:
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
   selector:
     matchLabels:
         app: {{ template "sentry.fullname" . }}
         release: "{{ .Release.Name }}"
-        role: subscription-consumer-events
+        role: snuba-subscription-consumer-events
   replicas: {{ .Values.snuba.subscriptionConsumerEvents.replicas }}
   template:
     metadata:
@@ -34,7 +35,7 @@ spec:
       labels:
         app: {{ template "sentry.fullname" . }}
         release: "{{ .Release.Name }}"
-        role: subscription-consumer-events
+        role: snuba-subscription-consumer-events
         {{- if .Values.snuba.subscriptionConsumerEvents.podLabels }}
 {{ toYaml .Values.snuba.subscriptionConsumerEvents.podLabels | indent 8 }}
         {{- end }}
@@ -55,13 +56,18 @@ spec:
       imagePullSecrets:
 {{ toYaml .Values.images.snuba.imagePullSecrets | indent 8 }}
       {{- end }}
+      {{- if .Values.snuba.subscriptionConsumerEvents.securityContext }}
+      securityContext:
+{{ toYaml .Values.snuba.subscriptionConsumerEvents.securityContext | indent 8 }}
+      {{- end }}
       containers:
       - name: {{ .Chart.Name }}-snuba
         image: "{{ template "snuba.image" . }}"
         imagePullPolicy: {{ default "IfNotPresent" .Values.images.snuba.pullPolicy }}
         args:
           - subscriptions
-          - --auto-offset-reset=latest
+          - "--auto-offset-reset"
+          - "{{ .Values.snuba.subscriptionConsumerEvents.autoOffsetReset }}"
           - --delay-seconds=60
           - --schedule-ttl=60
           - --dataset=events
@@ -100,7 +106,10 @@ spec:
           name: config
           readOnly: true
         resources:
-{{ toYaml .Values.snuba.subscriptionConsumerEvents.resources | indent 10 }}
+{{ toYaml .Values.snuba.subscriptionConsumerEvents.resources | indent 12 }}
+      {{- if .Values.serviceAccount.enabled }}
+      serviceAccountName: {{ .Values.serviceAccount.name }}-snuba
+      {{- end }}
       volumes:
         - name: config
           configMap:

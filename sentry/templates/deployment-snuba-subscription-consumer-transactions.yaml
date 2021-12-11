@@ -14,14 +14,15 @@ metadata:
     meta.helm.sh/release-name: "{{ .Release.Name }}"
     meta.helm.sh/release-namespace: "{{ .Release.Namespace }}"
     "helm.sh/hook": "post-install,post-upgrade"
-    "helm.sh/hook-weight": "16"
+    "helm.sh/hook-weight": "18"
   {{- end }}
 spec:
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
   selector:
     matchLabels:
         app: {{ template "sentry.fullname" . }}
         release: "{{ .Release.Name }}"
-        role: subscription-consumer-transactions
+        role: snuba-subscription-consumer-transactions
   replicas: {{ .Values.snuba.subscriptionConsumerTransactions.replicas }}
   template:
     metadata:
@@ -34,7 +35,7 @@ spec:
       labels:
         app: {{ template "sentry.fullname" . }}
         release: "{{ .Release.Name }}"
-        role: subscription-consumer-transactions
+        role: snuba-subscription-consumer-transactions
         {{- if .Values.snuba.subscriptionConsumerTransactions.podLabels }}
 {{ toYaml .Values.snuba.subscriptionConsumerTransactions.podLabels | indent 8 }}
         {{- end }}
@@ -55,13 +56,18 @@ spec:
       imagePullSecrets:
 {{ toYaml .Values.images.snuba.imagePullSecrets | indent 8 }}
       {{- end }}
+      {{- if .Values.snuba.subscriptionConsumerTransactions.securityContext }}
+      securityContext:
+{{ toYaml .Values.snuba.subscriptionConsumerTransactions.securityContext | indent 8 }}
+      {{- end }}
       containers:
       - name: {{ .Chart.Name }}-snuba
         image: "{{ template "snuba.image" . }}"
         imagePullPolicy: {{ default "IfNotPresent" .Values.images.snuba.pullPolicy }}
         args:
           - subscriptions
-          - --auto-offset-reset=latest
+          - "--auto-offset-reset"
+          - "{{ .Values.snuba.subscriptionConsumerTransactions.autoOffsetReset }}"
           - --delay-seconds=60
           - --schedule-ttl=60
           - --dataset=transactions
@@ -101,7 +107,10 @@ spec:
           name: config
           readOnly: true
         resources:
-{{ toYaml .Values.snuba.subscriptionConsumerTransactions.resources | indent 10 }}
+{{ toYaml .Values.snuba.subscriptionConsumerTransactions.resources | indent 12 }}
+      {{- if .Values.serviceAccount.enabled }}
+      serviceAccountName: {{ .Values.serviceAccount.name }}-snuba
+      {{- end }}
       volumes:
         - name: config
           configMap:

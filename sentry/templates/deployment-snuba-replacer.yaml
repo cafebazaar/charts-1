@@ -56,6 +56,13 @@ spec:
       imagePullSecrets:
 {{ toYaml .Values.images.snuba.imagePullSecrets | indent 8 }}
       {{- end }}
+      {{- if .Values.dnsPolicy }}
+      dnsPolicy: {{ .Values.dnsPolicy | quote }}
+      {{- end }}
+      {{- if .Values.dnsConfig }}
+      dnsConfig:
+{{ toYaml .Values.dnsConfig | indent 8 }}
+      {{- end }}
       {{- if .Values.snuba.replacer.securityContext }}
       securityContext:
 {{ toYaml .Values.snuba.replacer.securityContext | indent 8 }}
@@ -68,12 +75,21 @@ spec:
         - replacer
         - --storage
         - errors
-        - --auto-offset-reset=latest
+        - "--auto-offset-reset"
+        - "{{ .Values.snuba.replacer.autoOffsetReset }}"
         - --max-batch-size 
         - "{{ default "3" .Values.snuba.outcomesConsumer.maxBatchSize }}"
         {{- if .Values.snuba.replacer.maxBatchTimeMs }}
         - "--max-batch-time-ms"
         - "{{ .Values.snuba.replacer.maxBatchTimeMs }}"
+        {{- end }}
+        {{- if .Values.snuba.replacer.queuedMaxMessagesKbytes }}
+        - "--queued-max-messages-kbytes"
+        - "{{ .Values.snuba.replacer.queuedMaxMessagesKbytes }}"
+        {{- end }}
+        {{- if .Values.snuba.replacer.queuedMinMessages }}
+        - "--queued-min-messages"
+        - "{{ .Values.snuba.replacer.queuedMinMessages }}"
         {{- end }}
         {{- if .Values.snuba.replacer.queuedMaxMessagesKbytes }}
         - "--queued-max-messages-kbytes"
