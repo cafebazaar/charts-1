@@ -129,6 +129,10 @@ spec:
         - mountPath: /etc/snuba
           name: config
           readOnly: true
+        {{- if .Values.snuba.consumer.processes }}
+        - mountPath: /dev/shm
+          name: shm
+        {{- end }}
 {{- if .Values.snuba.consumer.volumeMounts }}
 {{ toYaml .Values.snuba.consumer.volumeMounts | indent 8 }}
 {{- end }}
@@ -141,6 +145,11 @@ spec:
         - name: config
           configMap:
             name: {{ template "sentry.fullname" . }}-snuba
+        {{- if .Values.snuba.consumer.processes }}
+        - emptyDir:
+            medium: Memory
+          name: shm
+        {{- end }}
 {{- if .Values.snuba.consumer.volumes }}
 {{ toYaml .Values.snuba.consumer.volumes | indent 8 }}
 {{- end }}
