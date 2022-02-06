@@ -56,6 +56,8 @@ relay:
   affinity: {}
   nodeSelector: {}
   securityContext: {}
+  service:
+    annotations: {}
   # tolerations: []
   # podLabels: []
 
@@ -95,6 +97,8 @@ sentry:
     nodeSelector: {}
     workers: 4
     securityContext: {}
+    service:
+      annotations: {}
     # tolerations: []
     # podLabels: []
     # Mount and use custom CA
@@ -181,6 +185,13 @@ sentry:
     # tolerations: []
     # podLabels: []
     # commitBatchSize: 1
+    sidecars: [ ]
+    volumes: [ ]
+  cleanup:
+    concurrencyPolicy: Allow
+    enabled: true
+    schedule: "0 0 * * *"
+    days: 90
     sidecars: []
     volumes: []
 
@@ -232,6 +243,8 @@ snuba:
     affinity: {}
     nodeSelector: {}
     securityContext: {}
+    service:
+      annotations: {}
     # tolerations: []
     # podLabels: []
 
@@ -415,12 +428,14 @@ snuba:
     schedule: "0 0 * * *"
 
   cleanupErrors:
+    concurrencyPolicy: Allow
     enabled: true
     schedule: "0 * * * *"
     sidecars: []
     volumes: []
 
   cleanupTransactions:
+    concurrencyPolicy: Allow
     enabled: true
     schedule: "0 * * * *"
     sidecars: []
