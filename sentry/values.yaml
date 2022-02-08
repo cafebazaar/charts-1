@@ -187,11 +187,13 @@ sentry:
     # commitBatchSize: 1
     sidecars: [ ]
     volumes: [ ]
+  
   cleanup:
     concurrencyPolicy: Allow
+    timed: true
     enabled: true
     schedule: "0 0 * * *"
-    days: 90
+    resources: {}
     sidecars: []
     volumes: []
 
@@ -206,14 +208,7 @@ sentry:
     # commitBatchSize: 1
     sidecars: []
     volumes: []
-    
-  cleanup:
-    enabled: true
-    timed: true
-    resources: {}
-    schedule: "0 0 * * *"
-    sidecars: []
-    volumes: []
+
 
   subscriptionConsumerTransactions:
     replicas: 1
