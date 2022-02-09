@@ -95,6 +95,7 @@ spec:
           {{- end }}
           - --log-level
           - {{ .Values.snuba.logging.level }}
+          - --partitions={{ .Values.snuba.subscriptionConsumerTransactions.partitions}}
         ports:
         - containerPort: {{ template "snuba.port" }}
         env:
