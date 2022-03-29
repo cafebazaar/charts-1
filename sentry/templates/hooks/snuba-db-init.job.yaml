@@ -66,12 +66,6 @@ spec:
         env:
         - name: LOG_LEVEL
           value: debug
-        - name: SNUBA_SETTINGS
-          value: docker
-        - name: SENTRY_EVENT_RETENTION_DAYS
-          value: {{ .Values.sentry.eventRetentionDays | quote }}
-        - name: CLICKHOUSE_SINGLE_NODE
-          value: "true"
 {{ include "sentry.snuba.env" . | indent 8 }}
 {{- if .Values.hooks.snubaInit.env }}
 {{ toYaml .Values.hooks.snubaInit.env | indent 8 }}

@@ -443,11 +443,9 @@ Common Snuba environment variables
 */}}
 {{- define "sentry.snuba.env" -}}
 - name: SNUBA_SETTINGS
-  value: docker
+  value: /etc/snuba/settings.py
 - name: SENTRY_EVENT_RETENTION_DAYS
   value: {{ .Values.sentry.eventRetentionDays | quote }}
-- name: CLICKHOUSE_SINGLE_NODE
-  value: {{ if .Values.externalClickhouse.clusterName }}"false"{{ else }}"true"{{end}}
 {{- if .Values.metrics.enabled }}
 - name: DOGSTATSD_HOST
   value: "{{ template "sentry.fullname" . }}-metrics"

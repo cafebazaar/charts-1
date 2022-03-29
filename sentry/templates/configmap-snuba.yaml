@@ -18,6 +18,8 @@ data:
 
     DEBUG = env("DEBUG", "0").lower() in ("1", "true")
 
+    DEFAULT_RETENTION_DAYS = env("SENTRY_EVENT_RETENTION_DAYS", 90)
+
     # Clickhouse Options
     CLUSTERS = [
       {
@@ -64,5 +66,7 @@ data:
     DOGSTATSD_HOST = "{{ template "sentry.fullname" . }}-metrics"
     DOGSTATSD_PORT = 9125
 {{- end }}
+
+    SENTRY_DSN = env("SENTRY_DSN")
 
 {{ .Values.config.snubaSettingsPy | indent 4 }}
