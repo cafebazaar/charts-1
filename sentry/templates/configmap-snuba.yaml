@@ -56,6 +56,34 @@ data:
       },
     ]
 
+    {{ if and (not .Values.kafka.enabled) .Values.externalKafka.topics }}
+    {{- with .Values.externalKafka.topics }}
+    KAFKA_TOPIC_MAP = {
+      "events": {{ .sentryEvents | quote }},
+      "event-replacements": {{ .replacement | quote }},
+      "snuba-commit-log": {{ .commitLog | quote }},
+      "cdc": "cdc",
+      "snuba-metrics": "snuba-metrics",
+      "outcomes": {{ .outcomes | quote }},
+      "ingest-sessions": {{ .ingestSessions | quote }},
+      "snuba-sessions-commit-log": {{ .commitLog | quote }},
+      "snuba-metrics-commit-log": {{ .commitLog | quote }},
+      "scheduled-subscriptions-events": "scheduled-subscriptions-events",
+      "scheduled-subscriptions-transactions": "scheduled-subscriptions-transactions",
+      "scheduled-subscriptions-sessions": "scheduled-subscriptions-sessions",
+      "scheduled-subscriptions-metrics": "scheduled-subscriptions-metrics",
+      "events-subscription-results": {{ .eventsSubscriptionResults | quote }},
+      "transactions-subscription-results": {{ .transactionsSubscriptionResults | quote }},
+      "sessions-subscription-results": "sessions-subscription-results",
+      "metrics-subscription-results": "metrics-subscription-results",
+      "snuba-queries": "snuba-queries",
+      "processed-profiles": "processed-profiles",
+      "snuba-dead-letter-inserts": "snuba-dead-letter-inserts",
+    }
+    {{- end }}
+    {{- end }}
+
+
     # Redis Options
     REDIS_HOST = {{ include "sentry.redis.host" . | quote }}
     REDIS_PORT = {{ include "sentry.redis.port" . }}
