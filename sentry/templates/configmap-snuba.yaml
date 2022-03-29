@@ -50,6 +50,8 @@ data:
         "single_node": False,
         "cluster_name": {{ include "sentry.clickhouse.cluster.name" . | quote }},
         "distributed_cluster_name": {{ include "sentry.clickhouse.cluster.name" . | quote }},
+        {{- else }}
+        "single_node": True,
         {{- end }}
       },
     ]
