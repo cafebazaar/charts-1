@@ -64,8 +64,10 @@ spec:
       - name: {{ .Chart.Name }}-snuba
         image: "{{ template "snuba.image" . }}"
         imagePullPolicy: {{ default "IfNotPresent" .Values.images.snuba.pullPolicy }}
-        args:
-          - subscriptions
+        command:
+          - "snuba"
+          - "subscriptions"
+          - "--partitions={{ .Values.snuba.subscriptionConsumerEvents.partitions}}"
           - "--auto-offset-reset"
           - "{{ .Values.snuba.subscriptionConsumerEvents.autoOffsetReset }}"
           - --delay-seconds=60

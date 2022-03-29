@@ -87,45 +87,45 @@ spec:
 {{ toYaml .Values.dnsConfig | indent 8 }}
       {{- end }}
       containers:
-        - name: {{ .Chart.Name }}-relay
-          image: "{{ template "relay.image" . }}"
-          imagePullPolicy: {{ default "IfNotPresent" .Values.images.sentry.pullPolicy }}
-          ports:
-          - containerPort: {{ template "relay.port" }}
-          env:
-          - name: RELAY_PORT
-            value: '{{ template "relay.port" }}'
-  {{- if .Values.relay.env }}
-  {{ toYaml .Values.relay.env | indent 8 }}
-  {{- end }}
-          volumeMounts:
-            - name: credentials
-              mountPath: /work/.relay
-            - name: config
-              mountPath: /work/.relay/config.yml
-              subPath: config.yml
-              readOnly: true
-          livenessProbe:
-            failureThreshold: {{ .Values.relay.probeFailureThreshold }}
-            httpGet:
-              path: {{ template "relay.healthCheck.requestPath" }}
-              port: {{ template "relay.port" }}
-              scheme: HTTP
-            initialDelaySeconds: {{ .Values.relay.probeInitialDelaySeconds }}
-            periodSeconds: {{ .Values.relay.probePeriodSeconds }}
-            successThreshold: {{ .Values.relay.probeSuccessThreshold }}
-            timeoutSeconds: {{ .Values.relay.probeTimeoutSeconds }}
-          readinessProbe:
-            failureThreshold: {{ .Values.relay.probeFailureThreshold }}
-            httpGet:
-              path: {{ template "relay.healthCheck.requestPath" }}
-              port: {{ template "relay.port" }}
-              scheme: HTTP
-            initialDelaySeconds: {{ .Values.relay.probeInitialDelaySeconds }}
-            periodSeconds: {{ .Values.relay.probePeriodSeconds }}
-            successThreshold: {{ .Values.relay.probeSuccessThreshold }}
-            timeoutSeconds: {{ .Values.relay.probeTimeoutSeconds }}
-          resources:
+      - name: {{ .Chart.Name }}-relay
+        image: "{{ template "relay.image" . }}"
+        imagePullPolicy: {{ default "IfNotPresent" .Values.images.sentry.pullPolicy }}
+        ports:
+        - containerPort: {{ template "relay.port" }}
+        env:
+        - name: RELAY_PORT
+          value: '{{ template "relay.port" }}'
+{{- if .Values.relay.env }}
+{{ toYaml .Values.relay.env | indent 8 }}
+{{- end }}
+        volumeMounts:
+          - name: credentials
+            mountPath: /work/.relay
+          - name: config
+            mountPath: /work/.relay/config.yml
+            subPath: config.yml
+            readOnly: true
+        livenessProbe:
+          failureThreshold: {{ .Values.relay.probeFailureThreshold }}
+          httpGet:
+            path: {{ template "relay.healthCheck.livenessRequestPath" }}
+            port: {{ template "relay.port" }}
+            scheme: HTTP
+          initialDelaySeconds: {{ .Values.relay.probeInitialDelaySeconds }}
+          periodSeconds: {{ .Values.relay.probePeriodSeconds }}
+          successThreshold: {{ .Values.relay.probeSuccessThreshold }}
+          timeoutSeconds: {{ .Values.relay.probeTimeoutSeconds }}
+        readinessProbe:
+          failureThreshold: {{ .Values.relay.probeFailureThreshold }}
+          httpGet:
+            path: {{ template "relay.healthCheck.readinessRequestPath" }}
+            port: {{ template "relay.port" }}
+            scheme: HTTP
+          initialDelaySeconds: {{ .Values.relay.probeInitialDelaySeconds }}
+          periodSeconds: {{ .Values.relay.probePeriodSeconds }}
+          successThreshold: {{ .Values.relay.probeSuccessThreshold }}
+          timeoutSeconds: {{ .Values.relay.probeTimeoutSeconds }}
+        resources:
 {{ toYaml .Values.relay.resources | indent 12 }}
 {{- if .Values.relay.sidecars }}
 {{ toYaml .Values.relay.sidecars | indent 6 }}
