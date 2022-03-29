@@ -62,7 +62,13 @@ spec:
       containers:
       - name: snuba-init
         image: "{{ template "snuba.image" . }}"
-        command: [snuba, bootstrap, --no-migrate, --force]
+        args: 
+        - bootstrap
+        - --no-migrate
+        - --force
+        {{- if not .Values.hooks.snubaInit.kafka }}
+        - --no-kafka
+        {{- end }}
         env:
         - name: LOG_LEVEL
           value: debug
