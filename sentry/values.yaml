@@ -686,6 +686,7 @@ config:
 
 clickhouse:
   enabled: true
+  # singleNode: true
   clickhouse:
     imageVersion: "20.8.19.4"
     configmap:
