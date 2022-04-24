@@ -686,6 +686,7 @@ config:
 
 clickhouse:
   enabled: true
+  # singleNode: true
   clickhouse:
     imageVersion: "20.8.19.4"
     configmap:
@@ -800,6 +801,17 @@ externalKafka:
   #   replacement: ""
   #   commitLog: ""
   #   sentryEvents: ""
+  #   cdc: ""
+  #   snubaMetrics: ""
+  #   scheduledSubscriptionsEvents: ""
+  #   scheduledSubscriptionsTransactions: ""
+  #   scheduledSubscriptionsSessions: ""
+  #   scheduledSubscriptionsMetrics: ""
+  #   sessionsSubscriptionResults: ""
+  #   metricsSubscriptionResults: ""
+  #   snubaQueries: ""
+  #   processedProfiles: ""
+  #   snubaDeadLetterInserts: ""
   # consumerGroups:
   #   commitLog: ""
   #   transactionCommitLog: ""
