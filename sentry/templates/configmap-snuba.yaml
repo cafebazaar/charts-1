@@ -48,6 +48,8 @@ data:
         },
         {{- if or (and .Values.clickhouse.enabled (not .Values.clickhouse.singleNode)) (not .Values.externalClickhouse.singleNode) }}
         "single_node": False,
+        {{- end }}
+        {{- if or .Values.clickhouse.enabled (not .Values.externalClickhouse.singleNode) }}
         "cluster_name": {{ include "sentry.clickhouse.cluster.name" . | quote }},
         "distributed_cluster_name": {{ include "sentry.clickhouse.cluster.name" . | quote }},
         {{- else }}
