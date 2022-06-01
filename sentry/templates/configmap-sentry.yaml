@@ -222,6 +222,7 @@ data:
     {{- with .Values.externalKafka.topics }}
 
     KAFKA_EVENTS = {{ .sentryEvents | quote }}
+    KAFKA_TRANSACTIONS = {{ .sentryEvents | quote }}
     KAFKA_OUTCOMES = {{ .outcomes | quote }}
     KAFKA_EVENTS_SUBSCRIPTIONS_RESULTS = {{ .eventsSubscriptionResults | quote }}
     KAFKA_TRANSACTIONS_SUBSCRIPTIONS_RESULTS = {{ .transactionsSubscriptionResults | quote }}
@@ -236,6 +237,7 @@ data:
 
     KAFKA_TOPICS = {
         KAFKA_EVENTS: {"cluster": "default", "topic": KAFKA_EVENTS},
+        KAFKA_TRANSACTIONS: {"cluster": "default", "topic": KAFKA_TRANSACTIONS},
         KAFKA_OUTCOMES: {"cluster": "default", "topic": KAFKA_OUTCOMES},
         KAFKA_EVENTS_SUBSCRIPTIONS_RESULTS: {
             "cluster": "default",
