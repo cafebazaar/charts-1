@@ -65,13 +65,16 @@ spec:
         image: "{{ template "snuba.image" . }}"
         imagePullPolicy: {{ default "IfNotPresent" .Values.images.snuba.pullPolicy }}
         args:
-          - "subscriptions"
+          - "subscriptions-scheduler-executor"
           - "--partitions={{ .Values.snuba.subscriptionConsumerEvents.partitions}}"
           - "--auto-offset-reset"
           - "{{ .Values.snuba.subscriptionConsumerEvents.autoOffsetReset }}"
           - --delay-seconds=60
           - --schedule-ttl=60
+          - --stale-threshold-seconds=900
           - --dataset=events
+          - --entity=events
+          - --no-strict-offset-reset
           {{- if and (not .Values.kafka.enabled) .Values.externalKafka.topics }}
           {{- with .Values.externalKafka.topics }}
           - --topic={{ .sentryEvents }}
@@ -83,10 +86,12 @@ spec:
           - --result-topic=events-subscription-results
           - --commit-log-topic=snuba-commit-log
           - --consumer-group=snuba-events-subscriptions-consumers
+          - --followed-consumer-group=snuba-consumers
           {{- end }}
           {{- if and (not .Values.kafka.enabled) .Values.externalKafka.consumerGroups }}
           {{- with .Values.externalKafka.consumerGroups }}
           - --consumer-group={{ .snubaEventsSubscriptionsConsumers }}
+          - --followed-consumer-group=snuba-consumers
           - --commit-log-group={{ .commitLog }}
           {{- end }}
           {{- end }}

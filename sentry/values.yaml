@@ -5,6 +5,12 @@ user:
   email: admin@sentry.local
   password: aaaa
 
+  ## set this value to an existingSecret name to create the admin user with the password in the secret
+  # existingSecret: sentry-admin-password
+
+  ## set this value to an existingSecretKey which holds the password to be used for sentry admin user default key is `admin-password`
+  # existingSecretKey: admin-password
+
 # this is required on the first installation, as sentry has to be initialized first
 # recommended to set false for updating the helm chart afterwards,
 # as you will have some downtime on each update if it's a hook
@@ -29,7 +35,7 @@ images:
     imagePullSecrets: []
   symbolicator:
     # repository: getsentry/symbolicator
-    tag: 0.5.0
+    tag: 0.5.1
     # pullPolicy: IfNotPresent
     imagePullSecrets: []
 
@@ -68,6 +74,11 @@ relay:
     targetCPUUtilizationPercentage: 50
   sidecars: []
   volumes: []
+
+geodata:
+  path: ""
+  volumeName: ""
+  mountPath: ""
 
 sentry:
   singleOrganization: true
@@ -215,6 +226,9 @@ sentry:
     volumes: []
 
   cleanup:
+    successfulJobsHistoryLimit: 5
+    failedJobsHistoryLimit: 5
+    activeDeadlineSeconds: 100
     concurrencyPolicy: Allow
     timed: true
     enabled: true
@@ -222,6 +236,7 @@ sentry:
     resources: {}
     sidecars: []
     volumes: []
+    serviceAccount: {}
 
 
 snuba:
@@ -229,6 +244,11 @@ snuba:
     level: INFO
   api:
     replicas: 1
+    # set command to ["snuba","api"] if securityContext.runAsUser > 0
+    # see: https://github.com/getsentry/snuba/issues/956
+    command: {}
+    #   - snuba
+    #   - api
     env: []
     probeInitialDelaySeconds: 10
     liveness:
@@ -329,7 +349,6 @@ snuba:
     # tolerations: []
     # podLabels: []
     autoOffsetReset: "earliest"
-    partitions: 1
 
   subscriptionConsumerTransactions:
     replicas: 1
@@ -416,22 +435,31 @@ snuba:
     # podLabels: []
 
   cleanupErrors:
+    successfulJobsHistoryLimit: 5
+    activeDeadlineSeconds: 100
     concurrencyPolicy: Allow
     enabled: true
     schedule: "0 * * * *"
     sidecars: []
     volumes: []
+    serviceAccount: {}
 
   cleanupTransactions:
+    successfulJobsHistoryLimit: 5
+    failedJobsHistoryLimit: 5
+    activeDeadlineSeconds: 100
     concurrencyPolicy: Allow
     enabled: true
     schedule: "0 * * * *"
     sidecars: []
     volumes: []
+    serviceAccount: {}
 
 hooks:
   enabled: true
   removeOnSuccess: true
+  activeDeadlineSeconds: 100
+  shareProcessNamespace: false
   dbCheck:
     image:
       # repository: subfuzion/netcat
@@ -439,6 +467,7 @@ hooks:
       # pullPolicy: IfNotPresent
       imagePullSecrets: []
     env: []
+    # podLabels: []
     podAnnotations: {}
     resources:
       limits:
@@ -448,9 +477,11 @@ hooks:
         memory: 64Mi
     affinity: {}
     nodeSelector: {}
+    securityContext: {}
     # tolerations: []
   dbInit:
     env: []
+    # podLabels: []
     podAnnotations: {}
     resources:
       limits:
@@ -467,6 +498,7 @@ hooks:
   snubaInit:
     env: []
     kafka: false
+    # podLabels: []
     podAnnotations: {}
     resources:
       limits:
@@ -478,6 +510,8 @@ hooks:
     affinity: {}
     nodeSelector: {}
     # tolerations: []
+  snubaMigrate: {}
+    # podLabels: []
 
 system:
   ## be sure to include the scheme on the url, for example: "https://sentry.example.com"
@@ -593,7 +627,8 @@ nginx:
   replicaCount: 1
   service:
     type: ClusterIP
-    port: 80
+    ports:
+      http: 80
   ## Use this to enable an extra service account
   # serviceAccount:
   #   create: false
@@ -769,7 +804,8 @@ kafka:
   socketRequestMaxBytes: "50000000"
 
   service:
-    port: 9092
+    ports:
+      client: 9092
 
   ## Use this to enable an extra service account
   # serviceAccount:
@@ -821,6 +857,9 @@ externalKafka:
   #   replacers: ""
   #   snubaTransactionsSubscriptionsConsumers: ""
   #   snubaEventsSubscriptionsConsumers: ""
+
+sourcemaps:
+  enabled: false
 
 redis:
   enabled: true
@@ -943,6 +982,18 @@ rabbitmq:
   # serviceAccount:
   #   create: false
   #   name: rabbitmq
+
+memcached:
+  memoryLimit: "2048"
+  maxItemSize: "26214400"
+  args:
+    - "memcached"
+    - "-u memcached"
+    - "-p 11211"
+    - "-v"
+    - "-m $(MEMCACHED_MEMORY_LIMIT)"
+    - "-I $(MEMCACHED_MAX_ITEM_SIZE)"
+  extraEnvVarsCM: "sentry-memcached"
 
 ## Prometheus Exporter / Metrics
 ##
