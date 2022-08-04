@@ -68,14 +68,14 @@ spec:
         args:
           - run
           - query-subscription-consumer
-          - --commit-batch-size {{ default "1" .Values.sentry.subscriptionConsumerEvents.commitBatchSize }}
+          - --commit-batch-size={{ default "1" .Values.sentry.subscriptionConsumerEvents.commitBatchSize }}
           {{- if and (not .Values.kafka.enabled) .Values.externalKafka.topics }}
-          - --topic {{ .Values.externalKafka.topics.eventsSubscriptionResults }}
+          - --topic={{ .Values.externalKafka.topics.eventsSubscriptionResults }}
           {{- else }}
-          - --topic events-subscription-results
+          - --topic=events-subscription-results
           {{- end }}
           {{- if and (not .Values.kafka.enabled) .Values.externalKafka.consumerGroups }}
-          - --group {{ .Values.externalKafka.consumerGroups.sentrySubscription }}
+          - --group={{ .Values.externalKafka.consumerGroups.sentrySubscription }}
           {{- end }}
         env:
         - name: SNUBA

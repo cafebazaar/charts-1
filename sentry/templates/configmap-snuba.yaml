@@ -47,6 +47,7 @@ data:
             "profiles",
             "replays",
             "generic_metrics_sets",
+            "generic_metrics_distributions",
         },
         {{- if or (and .Values.clickhouse.enabled (not .Values.clickhouse.singleNode)) (not .Values.externalClickhouse.singleNode) }}
         "single_node": False,
