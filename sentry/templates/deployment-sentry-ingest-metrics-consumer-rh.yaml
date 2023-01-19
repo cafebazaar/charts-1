@@ -1,48 +1,59 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ template "sentry.fullname" . }}-cron
+  name: {{ template "sentry.fullname" . }}-ingest-metrics-consumer-rh
   labels:
     app: {{ template "sentry.fullname" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
+    app.kubernetes.io/managed-by: "Helm"
+  {{- if .Values.asHook }}
+  {{- /* Add the Helm annotations so that deployment after asHook from true to false works */}}
+  annotations:
+    meta.helm.sh/release-name: "{{ .Release.Name }}"
+    meta.helm.sh/release-namespace: "{{ .Release.Namespace }}"
+    "helm.sh/hook": "post-install,post-upgrade"
+    "helm.sh/hook-weight": "10"
+  {{- end }}
 spec:
   revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
   selector:
     matchLabels:
-        app: {{ template "sentry.fullname" . }}
-        release: "{{ .Release.Name }}"
-        role: cron
-  replicas: {{ .Values.sentry.cron.replicas }}
+      app: {{ template "sentry.fullname" . }}
+      release: "{{ .Release.Name }}"
+      role: ingest-metrics-consumer-rh
+{{- if not .Values.sentry.ingestMetricsConsumerRh.autoscaling.enabled }}
+  replicas: {{ .Values.sentry.ingestMetricsConsumerRh.replicas }}
+{{- end }}
   template:
     metadata:
       annotations:
         checksum/configYml: {{ .Values.config.configYml | toYaml | toString | sha256sum }}
         checksum/sentryConfPy: {{ .Values.config.sentryConfPy | sha256sum }}
         checksum/config.yaml: {{ include (print $.Template.BasePath "/configmap-sentry.yaml") . | sha256sum }}
-        {{- if .Values.sentry.cron.annotations }}
-{{ toYaml .Values.sentry.cron.annotations | indent 8 }}
+        {{- if .Values.sentry.ingestMetricsConsumerRh.annotations }}
+{{ toYaml .Values.sentry.ingestMetricsConsumerRh.annotations | indent 8 }}
         {{- end }}
       labels:
         app: {{ template "sentry.fullname" . }}
         release: "{{ .Release.Name }}"
-        role: cron
-        {{- if .Values.sentry.cron.podLabels }}
-{{ toYaml .Values.sentry.cron.podLabels | indent 8 }}
+        role: ingest-metrics-consumer-rh
+        {{- if .Values.sentry.ingestMetricsConsumerRh.podLabels }}
+{{ toYaml .Values.sentry.ingestMetricsConsumerRh.podLabels | indent 8 }}
         {{- end }}
     spec:
       affinity:
-      {{- if .Values.sentry.cron.affinity }}
-{{ toYaml .Values.sentry.cron.affinity | indent 8 }}
+      {{- if .Values.sentry.ingestMetricsConsumerRh.affinity }}
+{{ toYaml .Values.sentry.ingestMetricsConsumerRh.affinity | indent 8 }}
       {{- end }}
-      {{- if .Values.sentry.cron.nodeSelector }}
+      {{- if .Values.sentry.ingestMetricsConsumerRh.nodeSelector }}
       nodeSelector:
-{{ toYaml .Values.sentry.cron.nodeSelector | indent 8 }}
+{{ toYaml .Values.sentry.ingestMetricsConsumerRh.nodeSelector | indent 8 }}
       {{- end }}
-      {{- if .Values.sentry.cron.tolerations }}
+      {{- if .Values.sentry.ingestMetricsConsumerRh.tolerations }}
       tolerations:
-{{ toYaml .Values.sentry.cron.tolerations | indent 8 }}
+{{ toYaml .Values.sentry.ingestMetricsConsumerRh.tolerations | indent 8 }}
       {{- end }}
       {{- if .Values.images.sentry.imagePullSecrets }}
       imagePullSecrets:
@@ -55,43 +66,31 @@ spec:
       dnsConfig:
 {{ toYaml .Values.dnsConfig | indent 8 }}
       {{- end }}
-      {{- if .Values.sentry.cron.securityContext }}
+      {{- if .Values.sentry.ingestMetricsConsumerRh.securityContext }}
       securityContext:
-{{ toYaml .Values.sentry.cron.securityContext | indent 8 }}
+{{ toYaml .Values.sentry.ingestMetricsConsumerRh.securityContext | indent 8 }}
       {{- end }}
       containers:
-      - name: {{ .Chart.Name }}-cron
+      - name: {{ .Chart.Name }}-ingest-metrics-consumer-rh
         image: "{{ template "sentry.image" . }}"
         imagePullPolicy: {{ default "IfNotPresent" .Values.images.sentry.pullPolicy }}
+        command: ["sentry"]
         args:
           - "run"
-          - "cron"
+          - "ingest-metrics-parallel-consumer"
+          - "--ingest-profile"
+          - "release-health"
+          {{- if .Values.sentry.ingestMetricsConsumerRh.maxBatchSize }}
+          - "--max-msg-batch-size"
+          - "{{ .Values.sentry.ingestMetricsConsumerRh.maxBatchSize }}"
+          {{- end }}
         env:
-        - name: SNUBA
-          value: {{ template "snuba.api" . }}
-        - name: SENTRY_LOG_LEVEL
-          value: {{ .Values.sentry.logging.level | default "INFO" | quote }}
         - name: C_FORCE_ROOT
           value: "true"
-        - name: METRICS_PREFIX
-          value: "cron"
-        {{- if .Values.postgresql.enabled }}
-        - name: POSTGRES_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: {{ default (include "sentry.postgresql.fullname" .) .Values.postgresql.existingSecret }}
-              key: {{ default "postgresql-password" .Values.postgresql.existingSecretKey }}
-        {{- end }}
-        {{ if and (eq .Values.filestore.backend "gcs") .Values.filestore.gcs.secretName }}
-        - name: GOOGLE_APPLICATION_CREDENTIALS
-          value: /var/run/secrets/google/{{ .Values.filestore.gcs.credentialsFile }}
-        {{ end }}
-{{- if .Values.sentry.cron.env }}
-{{ toYaml .Values.sentry.cron.env | indent 8 }}
+{{ include "sentry.env" . | indent 8 }}
+{{- if .Values.sentry.ingestMetricsConsumerRh.env }}
+{{ toYaml .Values.sentry.ingestMetricsConsumerRh.env | indent 8 }}
 {{- end }}
-        envFrom:
-        - secretRef:
-            name: {{ template "sentry.fullname" . }}-sentry-env
         volumeMounts:
         - mountPath: /etc/sentry
           name: config
@@ -102,16 +101,16 @@ spec:
         - name: sentry-google-cloud-key
           mountPath: /var/run/secrets/google
         {{ end }}
-{{- if .Values.sentry.cron.volumeMounts }}
-{{ toYaml .Values.sentry.cron.volumeMounts | indent 8 }}
+{{- if .Values.sentry.ingestMetricsConsumerRh.volumeMounts }}
+{{ toYaml .Values.sentry.ingestMetricsConsumerRh.volumeMounts | indent 8 }}
 {{- end }}
         resources:
-{{ toYaml .Values.sentry.cron.resources | indent 10 }}
-{{- if .Values.sentry.cron.sidecars }}
-{{ toYaml .Values.sentry.cron.sidecars | indent 6 }}
+{{ toYaml .Values.sentry.ingestMetricsConsumerRh.resources | indent 12 }}
+{{- if .Values.sentry.ingestMetricsConsumerRh.sidecars }}
+{{ toYaml .Values.sentry.ingestMetricsConsumerRh.sidecars | indent 6 }}
 {{- end }}
       {{- if .Values.serviceAccount.enabled }}
-      serviceAccountName: {{ .Values.serviceAccount.name }}-cron
+      serviceAccountName: {{ .Values.serviceAccount.name }}-ingest-metrics-consumer-rh
       {{- end }}
       volumes:
       - name: config
@@ -134,9 +133,9 @@ spec:
         secret:
           secretName: {{ .Values.filestore.gcs.secretName }}
       {{ end }}
-{{- if .Values.sentry.cron.volumes }}
-{{ toYaml .Values.sentry.cron.volumes | indent 6 }}
+{{- if .Values.sentry.ingestMetricsConsumerRh.volumes }}
+{{ toYaml .Values.sentry.ingestMetricsConsumerRh.volumes | indent 6 }}
 {{- end }}
-      {{- if .Values.sentry.cron.priorityClassName }}
-      priorityClassName: "{{ .Values.sentry.cron.priorityClassName }}"
+      {{- if .Values.sentry.ingestMetricsConsumerRh.priorityClassName }}
+      priorityClassName: "{{ .Values.sentry.ingestMetricsConsumerRh.priorityClassName }}"
       {{- end }}

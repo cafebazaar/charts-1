@@ -35,7 +35,7 @@ images:
     imagePullSecrets: []
   symbolicator:
     # repository: getsentry/symbolicator
-    tag: 0.5.1
+    tag: 0.6.0
     # pullPolicy: IfNotPresent
     imagePullSecrets: []
 
@@ -51,6 +51,7 @@ serviceAccount:
 
 relay:
   replicas: 1
+  # args: []
   mode: managed
   env: []
   probeFailureThreshold: 5
@@ -74,6 +75,13 @@ relay:
     targetCPUUtilizationPercentage: 50
   sidecars: []
   volumes: []
+  volumeMounts: []
+  init:
+    resources: {}
+    # additionalArgs: []
+    # env: []
+    # volumes: []
+    # volumeMounts: []
 
 geodata:
   path: ""
@@ -81,6 +89,9 @@ geodata:
   mountPath: ""
 
 sentry:
+  # to not generate a sentry-secret, use these 2 values to reference an existing secret
+  # existingSecret: "my-secret"
+  # existingSecretKey: "my-secret-key"
   singleOrganization: true
   eventRetentionDays: 14
   beacon: false
@@ -124,6 +135,7 @@ sentry:
       targetCPUUtilizationPercentage: 50
     sidecars: []
     volumes: []
+    volumeMounts: []
 
   worker:
     replicas: 3
@@ -149,9 +161,166 @@ sentry:
       failureThreshold: 3
     sidecars: []
     volumes: []
+    volumeMounts: []
 
   ingestConsumer:
     replicas: 1
+    env: []
+    resources: {}
+    affinity: {}
+    nodeSelector: {}
+    securityContext: {}
+    # tolerations: []
+    # podLabels: []
+    # maxBatchSize: ""
+
+    # it's better to use prometheus adapter and scale based on
+    # the size of the rabbitmq queue
+    autoscaling:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 3
+      targetCPUUtilizationPercentage: 50
+    sidecars: []
+    volumes: []
+
+    # volumeMounts:
+    #   - mountPath: /dev/shm
+    #     name: dshm
+
+  ingestMetricsConsumerPerf:
+    replicas: 1
+    # concurrency: 4
+    env: []
+    resources: {}
+    affinity: {}
+    nodeSelector: {}
+    securityContext: {}
+    # tolerations: []
+    # podLabels: []
+    # maxBatchSize: ""
+
+    # it's better to use prometheus adapter and scale based on
+    # the size of the rabbitmq queue
+    autoscaling:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 3
+      targetCPUUtilizationPercentage: 50
+    sidecars: []
+    volumes: []
+
+    # volumeMounts:
+    #   - mountPath: /dev/shm
+    #     name: dshm
+
+  ingestMetricsConsumerRh:
+    replicas: 1
+    # concurrency: 4
+    env: []
+    resources: {}
+    affinity: {}
+    nodeSelector: {}
+    securityContext: {}
+    # tolerations: []
+    # podLabels: []
+    # maxBatchSize: ""
+
+    # it's better to use prometheus adapter and scale based on
+    # the size of the rabbitmq queue
+    autoscaling:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 3
+      targetCPUUtilizationPercentage: 50
+    sidecars: []
+    volumes: []
+
+    # volumeMounts:
+    #   - mountPath: /dev/shm
+    #     name: dshm
+
+  billingMetricsConsumer:
+    replicas: 1
+    # concurrency: 4
+    env: []
+    resources: {}
+    affinity: {}
+    nodeSelector: {}
+    securityContext: {}
+    # tolerations: []
+    # podLabels: []
+    # maxBatchSize: ""
+
+    # it's better to use prometheus adapter and scale based on
+    # the size of the rabbitmq queue
+    autoscaling:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 3
+      targetCPUUtilizationPercentage: 50
+    sidecars: []
+    volumes: []
+
+    # volumeMounts:
+    #   - mountPath: /dev/shm
+    #     name: dshm
+
+  ingestMetricsConsumerPerf:
+    replicas: 1
+    # concurrency: 4
+    env: []
+    resources: {}
+    affinity: {}
+    nodeSelector: {}
+    securityContext: {}
+    # tolerations: []
+    # podLabels: []
+    # maxBatchSize: ""
+
+    # it's better to use prometheus adapter and scale based on
+    # the size of the rabbitmq queue
+    autoscaling:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 3
+      targetCPUUtilizationPercentage: 50
+    sidecars: []
+    volumes: []
+
+    # volumeMounts:
+    #   - mountPath: /dev/shm
+    #     name: dshm
+
+  ingestMetricsConsumerRh:
+    replicas: 1
+    # concurrency: 4
+    env: []
+    resources: {}
+    affinity: {}
+    nodeSelector: {}
+    securityContext: {}
+    # tolerations: []
+    # podLabels: []
+    # maxBatchSize: ""
+
+    # it's better to use prometheus adapter and scale based on
+    # the size of the rabbitmq queue
+    autoscaling:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 3
+      targetCPUUtilizationPercentage: 50
+    sidecars: []
+    volumes: []
+
+    # volumeMounts:
+    #   - mountPath: /dev/shm
+    #     name: dshm
+
+  billingMetricsConsumer:
+    replicas: 1
+    # concurrency: 4
     env: []
     resources: {}
     affinity: {}
@@ -185,6 +354,7 @@ sentry:
     # podLabels: []
     sidecars: []
     volumes: []
+    # volumeMounts: []
 
   subscriptionConsumerEvents:
     replicas: 1
@@ -198,6 +368,8 @@ sentry:
     # commitBatchSize: 1
     sidecars: []
     volumes: []
+    # noStrictOffsetReset: false
+    # volumeMounts: []
 
   subscriptionConsumerTransactions:
     replicas: 1
@@ -211,8 +383,10 @@ sentry:
     # commitBatchSize: 1
     sidecars: []
     volumes: []
+    # noStrictOffsetReset: false
+    # volumeMounts: []
 
-  postProcessForward:
+  postProcessForwardErrors:
     replicas: 1
     env: []
     resources: {}
@@ -224,6 +398,21 @@ sentry:
     # commitBatchSize: 1
     sidecars: []
     volumes: []
+    # volumeMounts: []
+
+  postProcessForwardTransactions:
+    replicas: 1
+    env: []
+    resources: {}
+    affinity: {}
+    nodeSelector: {}
+    securityContext: {}
+    # tolerations: []
+    # podLabels: []
+    # commitBatchSize: 1
+    sidecars: []
+    volumes: []
+    # volumeMounts: []
 
   cleanup:
     successfulJobsHistoryLimit: 5
@@ -233,9 +422,10 @@ sentry:
     timed: true
     enabled: true
     schedule: "0 0 * * *"
-    resources: {}
+    # securityContext: {}
     sidecars: []
     volumes: []
+    # volumeMounts: []
     serviceAccount: {}
 
 
@@ -246,7 +436,7 @@ snuba:
     replicas: 1
     # set command to ["snuba","api"] if securityContext.runAsUser > 0
     # see: https://github.com/getsentry/snuba/issues/956
-    command: {}
+    command: []
     #   - snuba
     #   - api
     env: []
@@ -271,6 +461,7 @@ snuba:
       targetCPUUtilizationPercentage: 50
     sidecars: []
     volumes: []
+    # volumeMounts: []
 
   consumer:
     replicas: 1
@@ -282,6 +473,7 @@ snuba:
     # tolerations: []
     # podLabels: []
     autoOffsetReset: "earliest"
+    # noStrictOffsetReset: false
     # maxBatchSize: ""
     # processes: 4
     # inputBlockSize: "50000000"
@@ -308,6 +500,7 @@ snuba:
     # tolerations: []
     # podLabels: []
     autoOffsetReset: "earliest"
+    # noStrictOffsetReset: false
     maxBatchSize: "3"
     # processes: 4
     # inputBlockSize: "50000000"
@@ -338,6 +531,8 @@ snuba:
     # maxBatchTimeMs: ""
     # queuedMaxMessagesKbytes: ""
     # queuedMinMessages: ""
+    # volumes: []
+    # volumeMounts: []
 
   subscriptionConsumerEvents:
     replicas: 1
@@ -349,6 +544,8 @@ snuba:
     # tolerations: []
     # podLabels: []
     autoOffsetReset: "earliest"
+    # volumes: []
+    # volumeMounts: []
 
   subscriptionConsumerTransactions:
     replicas: 1
@@ -360,7 +557,8 @@ snuba:
     # tolerations: []
     # podLabels: []
     autoOffsetReset: "earliest"
-    partitions: 1
+    # volumes: []
+    # volumeMounts: []
 
   sessionsConsumer:
     replicas: 1
@@ -372,6 +570,7 @@ snuba:
     # tolerations: []
     # podLabels: []
     autoOffsetReset: "earliest"
+    # noStrictOffsetReset: false
     # maxBatchSize: ""
     # processes: 4
     # inputBlockSize: "50000000"
@@ -398,6 +597,7 @@ snuba:
     # tolerations: []
     # podLabels: []
     autoOffsetReset: "earliest"
+    # noStrictOffsetReset: false
     # maxBatchSize: ""
     # processes: 4
     # inputBlockSize: "50000000"
@@ -442,7 +642,10 @@ snuba:
     schedule: "0 * * * *"
     sidecars: []
     volumes: []
+    # securityContext: {}
     serviceAccount: {}
+    # volumes: []
+    # volumeMounts: []
 
   cleanupTransactions:
     successfulJobsHistoryLimit: 5
@@ -453,7 +656,10 @@ snuba:
     schedule: "0 * * * *"
     sidecars: []
     volumes: []
+    # securityContext: {}
     serviceAccount: {}
+    # volumes: []
+    # volumeMounts: []
 
 hooks:
   enabled: true
@@ -479,6 +685,8 @@ hooks:
     nodeSelector: {}
     securityContext: {}
     # tolerations: []
+    # volumes: []
+    # volumeMounts: []
   dbInit:
     env: []
     # podLabels: []
@@ -495,6 +703,8 @@ hooks:
     affinity: {}
     nodeSelector: {}
     # tolerations: []
+    # volumes: []
+    # volumeMounts: []
   snubaInit:
     env: []
     kafka: false
@@ -510,8 +720,12 @@ hooks:
     affinity: {}
     nodeSelector: {}
     # tolerations: []
+    # volumes: []
+    # volumeMounts: []
   snubaMigrate: {}
     # podLabels: []
+    # volumes: []
+    # volumeMounts: []
 
 system:
   ## be sure to include the scheme on the url, for example: "https://sentry.example.com"
@@ -532,6 +746,9 @@ mail:
   useSsl: false
   username: ""
   password: ""
+  # existingSecret: secret-name
+  ## set existingSecretKey if key name inside existingSecret is different from 'mail-password'
+  # existingSecretKey: secret-key-name
   port: 25
   host: ""
   from: ""
@@ -580,6 +797,10 @@ symbolicator:
       minReplicas: 2
       maxReplicas: 5
       targetCPUUtilizationPercentage: 50
+
+    # volumes: []
+    # volumeMounts: []
+
   # TODO The cleanup cronjob is not yet implemented
   cleanup:
     enabled: false
@@ -718,6 +939,8 @@ config:
     # No Python Extension Config Given
   relay: |
     # No YAML relay config given
+  web:
+    httpKeepalive: 15
 
 clickhouse:
   enabled: true
@@ -775,6 +998,9 @@ externalClickhouse:
   password: ""
   database: default
   singleNode: true
+  # existingSecret: secret-name
+  ## set existingSecretKey if key name inside existingSecret is different from 'postgres-password'
+  # existingSecretKey: secret-key-name
   ## Cluster name, can be found in config
   ## (https://clickhouse.tech/docs/en/operations/server-configuration-parameters/settings/#server-settings-remote-servers)
   ## or by executing `select * from system.clusters`
@@ -904,18 +1130,23 @@ postgresql:
   #   enabled: false
 
 ## This value is only used when postgresql.enabled is set to false
-##
+## Set either externalPostgresql.password or externalPostgresql.existingSecret to configure password
+## externalPostgresql.existingSecret should have a key of 'postgres-password' which holds the password
 externalPostgresql:
   # host: postgres
   port: 5432
   username: postgres
   # password: postgres
+  # existingSecret: secret-name
+  ## set existingSecretKey if key name inside existingSecret is different from 'postgres-password'
+  # existingSecretKey: secret-key-name
   database: sentry
   # sslMode: require
 
 rabbitmq:
   ## If disabled, Redis will be used instead as the broker.
   enabled: true
+  vhost: /
   clustering:
     forceBoot: true
     rebalance: true

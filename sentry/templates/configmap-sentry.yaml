@@ -15,7 +15,6 @@ data:
     {{- if .Values.system.adminEmail }}
     system.admin-email: {{ .Values.system.adminEmail | quote }}
     {{- end }}
-    system.secret-key: {{ .Values.system.secretKey | default (randAlphaNum 50) | quote }}
     {{- if .Values.system.url }}
     system.url-prefix: {{ .Values.system.url | quote }}
     {{- end }}
@@ -121,6 +120,13 @@ data:
       {{- if .Values.filestore.s3.default_acl }}
       default_acl: {{ .Values.filestore.s3.default_acl | quote }}
       {{- end }}
+      #add comfig params for s3
+      {{- if .Values.filestore.s3.addressing_style }}
+      addressing_style: {{ .Values.filestore.s3.addressing_style | quote }}
+      {{- end }}
+      {{- if .Values.filestore.s3.location }}
+      location: {{ .Values.filestore.s3.location | quote }}
+      {{- end }}
     {{ end }}
 
     {{- if .Values.config.configYml }}
@@ -170,6 +176,13 @@ data:
     # General #
     ###########
 
+
+    secret_key = env('SENTRY_SECRET_KEY')
+    if not secret_key:
+      raise Exception('Error: SENTRY_SECRET_KEY is undefined')
+
+    SENTRY_OPTIONS['system.secret-key'] = secret_key
+
     # Instruct Sentry that this install intends to be run by a single organization
     # and thus various UI optimizations should be enabled.
     SENTRY_SINGLE_ORGANIZATION = {{ if .Values.sentry.singleOrganization }}True{{ else }}False{{ end }}
@@ -187,7 +200,7 @@ data:
     # on a Python framework called Celery to manage queues.
 
     {{- if or (.Values.rabbitmq.enabled) (.Values.rabbitmq.host) }}
-    BROKER_URL = os.environ.get("BROKER_URL", "amqp://{{ .Values.rabbitmq.auth.username }}:{{ .Values.rabbitmq.auth.password }}@{{ template "sentry.rabbitmq.host" . }}:5672//")
+    BROKER_URL = os.environ.get("BROKER_URL", "amqp://{{ .Values.rabbitmq.auth.username }}:{{ .Values.rabbitmq.auth.password }}@{{ template "sentry.rabbitmq.host" . }}:5672/{{ .Values.rabbitmq.vhost }}")
     {{- else if $redisPass }}
     BROKER_URL = os.environ.get("BROKER_URL", "redis://:{{ $redisPass }}@{{ $redisHost }}:{{ $redisPort }}/0")
     {{- else }}
@@ -353,7 +366,7 @@ data:
         "uwsgi-socket": None,
         "so-keepalive": True,
         # Keep this between 15s-75s as that's what Relay supports
-        "http-keepalive": True,
+        "http-keepalive": {{ .Values.config.web.httpKeepalive }},
         "http-chunked-input": True,
         # the number of web workers
         "workers": 3,
@@ -428,6 +441,7 @@ data:
                 "organizations:discover",
                 "organizations:discover-basic",
                 "organizations:discover-query",
+                "organizations:discover-frontend-use-events-endpoint",
                 "organizations:enterprise-perf",
                 "organizations:event-attachments",
                 "organizations:events",
@@ -455,6 +469,7 @@ data:
                 "organizations:onboarding",
                 "organizations:org-saved-searches",
                 "organizations:performance-view",
+                "organizations:performance-frontend-use-events-endpoint",
                 "organizations:project-detail",
                 "organizations:relay",
                 "organizations:release-performance-views",
@@ -474,6 +489,9 @@ data:
                 "organizations:unhandled-issue-flag",
                 "organizations:invite-members-rate-limits",
                 "organizations:dashboards-v2",
+                "organizations:metrics",
+                "organizations:metrics-extraction",
+                "organizations:transaction-metrics-extraction",
 
                 "projects:alert-filters",
                 "projects:custom-inbound-filters",

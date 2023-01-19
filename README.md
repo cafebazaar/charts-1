@@ -29,6 +29,23 @@ And change the docker image repo in values file to point to your desired docker 
 
 For now the full list of values is not documented but you can get inspired by the values.yaml specific to each directory.
 
+## Upgrading from 16.x.x version of this Chart to 17.x.x
+
+Sentry version from 22.10.0 onwards should be using chart 17.x.x
+
+- post process forwarder events and transactions topics are splitted in Sentry 22.10.0
+
+You can delete the deployment "sentry-post-process-forward" as it's no longer needed.
+
+
+
+## Upgrading from 15.x.x version of this Chart to 16.x.x
+
+system.secret-key is removed
+
+See https://github.com/sentry-kubernetes/charts/tree/develop/sentry#sentry-secret-key
+
+
 ## Upgrading from 14.x.x version of this Chart to 15.x.x
 
 Chart dependencies has been upgraded because of bitnami charts removal. 
@@ -121,6 +138,18 @@ By default, NGINX is enabled to allow sending the incoming requests to [Sentry R
 Note: if you are using NGINX Ingress, please set this annotation on your ingress : nginx.ingress.kubernetes.io/use-regex: "true".
 If you are using `additionalHostNames` the `nginx.ingress.kubernetes.io/upstream-vhost` annotation might also come in handy.
 It sets the `Host` header to the value you provide to avoid CSRF issues.
+
+### Letsencrypt on NGINX Ingress Controller
+```
+nginx:
+  ingress:
+    annotations:
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    enabled: true
+    hostname: fqdn
+    ingressClassName: "nginx"
+    tls: true
+```
 
 ## Clickhouse warning
 

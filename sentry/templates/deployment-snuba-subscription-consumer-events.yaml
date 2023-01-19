@@ -75,6 +75,10 @@ spec:
           - --entity=events
           - --no-strict-offset-reset
           - --followed-consumer-group=transactions_group
+          {{- if .Values.snuba.subscriptionConsumerEvents.noStrictOffsetReset }}
+          - "--no-strict-offset-reset"
+          {{- end }}
+          - "--consumer-group=snuba-events-subscriptions-consumers"
           - --log-level
           - {{ .Values.snuba.logging.level }}
         ports:
@@ -88,12 +92,18 @@ spec:
         - mountPath: /etc/snuba
           name: config
           readOnly: true
+{{- if .Values.snuba.subscriptionConsumerEvents.volumeMounts }}
+{{ toYaml .Values.snuba.subscriptionConsumerEvents.volumeMounts | indent 8 }}
+{{- end }}
         resources:
 {{ toYaml .Values.snuba.subscriptionConsumerEvents.resources | indent 12 }}
       {{- if .Values.serviceAccount.enabled }}
       serviceAccountName: {{ .Values.serviceAccount.name }}-snuba
       {{- end }}
       volumes:
-        - name: config
-          configMap:
-            name: {{ template "sentry.fullname" . }}-snuba
+      - name: config
+        configMap:
+          name: {{ template "sentry.fullname" . }}-snuba
+{{- if .Values.snuba.subscriptionConsumerEvents.volumes }}
+{{ toYaml .Values.snuba.subscriptionConsumerEvents.volumes | indent 6 }}
+{{- end }}

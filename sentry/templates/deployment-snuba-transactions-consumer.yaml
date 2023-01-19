@@ -120,6 +120,9 @@ spec:
         - --output-block-size
         - {{ required "A valid .Values.transactionsConsumer.outputBlockSize is required" .Values.snuba.transactionsConsumer.outputBlockSize | quote }}
         {{- end }}
+        {{- if .Values.snuba.transactionsConsumer.noStrictOffsetReset }}
+        - "--no-strict-offset-reset"
+        {{- end }}
         ports:
         - containerPort: {{ template "snuba.port" }}
         env:

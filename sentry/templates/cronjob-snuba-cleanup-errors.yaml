@@ -1,5 +1,6 @@
 {{- if .Values.snuba.cleanupErrors.enabled }}
-apiVersion: batch/v1beta1
+{{- $batchApiIsStable := eq (include "sentry.batch.isStable" .) "true" -}}
+apiVersion: {{ include "sentry.batch.apiVersion" . }}
 kind: CronJob
 metadata:
   name: {{ template "sentry.fullname" . }}-snuba-cleanup-errors
@@ -56,6 +57,10 @@ spec:
           imagePullSecrets:
 {{ toYaml .Values.images.snuba.imagePullSecrets | indent 12 }}
             {{- end }}
+            {{- if .Values.snuba.cleanupErrors.securityContext }}
+          securityContext:
+{{ toYaml .Values.snuba.cleanupErrors.securityContext | indent 12 }}
+      {{- end }}
           containers:
           - name: {{ .Chart.Name }}-snuba-cleanup-errors
             image: "{{ template "snuba.image" . }}"
@@ -80,6 +85,9 @@ spec:
               - mountPath: /etc/snuba
                 name: config
                 readOnly: true
+{{- if .Values.snuba.cleanupErrors.volumeMounts }}
+{{ toYaml .Values.snuba.cleanupErrors.volumeMounts | indent 14 }}
+{{- end }}
             resources:
 {{ toYaml .Values.snuba.cleanupErrors.resources | indent 14 }}
 {{- if .Values.snuba.cleanupErrors.sidecars }}
@@ -91,7 +99,7 @@ spec:
               configMap:
                 name: {{ template "sentry.fullname" . }}-snuba
 {{- if .Values.snuba.cleanupErrors.volumes }}
-{{ toYaml .Values.snuba.cleanupErrors.volumes | indent 10 }}
+{{ toYaml .Values.snuba.cleanupErrors.volumes | indent 12 }}
 {{- end }}
           {{- if .Values.snuba.cleanupErrors.priorityClassName }}
           priorityClassName: "{{ .Values.snuba.cleanupErrors.priorityClassName }}"

@@ -99,6 +99,26 @@ Return if ingress is stable.
 {{- end -}}
 
 {{/*
+Return the appropriate batch apiVersion for cronjobs.
+batch/v1beta1 will no longer be served in v1.25
+See more at https://kubernetes.io/docs/reference/using-api/deprecation-guide/#cronjob-v125
+*/}}
+{{- define "sentry.batch.apiVersion" -}}
+  {{- if and (.Capabilities.APIVersions.Has "batch/v1") (semverCompare ">= 1.21.x" (include "sentry.kubeVersion" .)) -}}
+      {{- print "batch/v1" -}}
+  {{- else if .Capabilities.APIVersions.Has "batch/v1beta1" -}}
+    {{- print "batch/v1beta1" -}}
+  {{- end -}}
+{{- end -}}
+
+{{/*
+Return if batch is stable.
+*/}}
+{{- define "sentry.batch.isStable" -}}
+  {{- eq (include "sentry.batch.apiVersion" .) "batch/v1" -}}
+{{- end -}}
+
+{{/*
 Return if ingress supports ingressClassName.
 */}}
 {{- define "sentry.ingress.supportsIngressClassName" -}}
@@ -223,17 +243,6 @@ Set postgresql username
 {{- end -}}
 
 {{/*
-Set postgresql password
-*/}}
-{{- define "sentry.postgresql.password" -}}
-{{- if .Values.postgresql.enabled -}}
-{{- default "" .Values.postgresql.postgresqlPassword }}
-{{- else -}}
-{{ required "A valid .Values.externalPostgresql.password is required" .Values.externalPostgresql.password }}
-{{- end -}}
-{{- end -}}
-
-{{/*
 Set postgresql database
 */}}
 {{- define "sentry.postgresql.database" -}}
@@ -344,13 +353,6 @@ default
 {{- end -}}
 
 {{/*
-Set ClickHouse Authorization
-*/}}
-{{- define "sentry.clickhouse.auth" -}}
---user {{ include "sentry.clickhouse.username" . }} --password {{ include "sentry.clickhouse.password" .| quote }}
-{{- end -}}
-
-{{/*
 Set ClickHouse User
 */}}
 {{- define "sentry.clickhouse.username" -}}
@@ -455,6 +457,13 @@ Common Snuba environment variables
 {{- end}}
 - name: DEFAULT_BROKERS
   value: {{ include "sentry.kafka.bootstrap_servers_string" . | quote }}
+{{- if .Values.externalClickhouse.existingSecret }}
+- name: CLICKHOUSE_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.externalClickhouse.existingSecret }}
+      key: {{ default "clickhouse-password" .Values.externalClickhouse.existingSecretKey }}
+{{- end }}
 - name: SENTRY_DSN
   value: {{ .Values.snuba.sentryDsn | quote }}
 - name: CLICKHOUSE_HOST
@@ -465,4 +474,55 @@ Common Snuba environment variables
   value: {{ include "sentry.redis.port" . | quote }}
 - name: CLICKHOUSE_HTTP_PORT
   value: {{ include "sentry.clickhouse.http_port" . | quote }}
+{{- end -}}
+
+{{/*
+Common Sentry environment variables
+*/}}
+{{- define "sentry.env" -}}
+- name: SNUBA
+  value: http://{{ template "sentry.fullname" . }}-snuba:{{ template "snuba.port" . }}
+{{- if .Values.sentry.existingSecret }}
+- name: SENTRY_SECRET_KEY
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.sentry.existingSecret }}
+      key: {{ default "key" .Values.sentry.existingSecretKey }}
+{{- else }}
+- name: SENTRY_SECRET_KEY
+  valueFrom:
+    secretKeyRef:
+      name: {{ template "sentry.fullname" . }}-sentry-secret
+      key: "key"
+{{- end }}
+{{- if .Values.postgresql.enabled }}
+- name: POSTGRES_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: {{ default (include "sentry.postgresql.fullname" .) .Values.postgresql.existingSecret }}
+      key: {{ default "postgresql-password" .Values.postgresql.existingSecretKey }}
+{{- else if .Values.externalPostgresql.password }}
+- name: POSTGRES_PASSWORD
+  value: {{ .Values.externalPostgresql.password | quote }}
+{{- else if .Values.externalPostgresql.existingSecret }}
+- name: POSTGRES_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.externalPostgresql.existingSecret }}
+      key: {{ default "postgresql-password" .Values.externalPostgresql.existingSecretKey }}
+{{- end }}
+{{- if and (eq .Values.filestore.backend "gcs") .Values.filestore.gcs.secretName }}
+- name: GOOGLE_APPLICATION_CREDENTIALS
+  value: /var/run/secrets/google/{{ .Values.filestore.gcs.credentialsFile }}
+{{- end }}
+{{- if .Values.mail.password }}
+- name: SENTRY_EMAIL_PASSWORD
+  value: {{ .Values.mail.password | quote }}
+{{- else if .Values.mail.existingSecret }}
+- name: SENTRY_EMAIL_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.mail.existingSecret }}
+      key: {{ default "mail-password" .Values.mail.existingSecretKey }}
+{{- end }}
 {{- end -}}
