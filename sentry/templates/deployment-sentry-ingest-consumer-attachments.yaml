@@ -85,25 +85,13 @@ spec:
           - "{{ .Values.sentry.ingestConsumer.maxBatchSize }}"
           {{- end }}
         env:
-        - name: SNUBA
-          value: http://{{ template "sentry.fullname" . }}-snuba:{{ template "snuba.port" }}
         - name: C_FORCE_ROOT
           value: "true"
         - name: METRICS_PREFIX
           value: "ingest_consumer"
         - name: SENTRY_LOG_LEVEL
           value: {{ .Values.sentry.logging.level | default "INFO" | quote }}
-        {{- if .Values.postgresql.enabled }}
-        - name: POSTGRES_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: {{ default (include "sentry.postgresql.fullname" .) .Values.postgresql.existingSecret }}
-              key: {{ default "postgresql-password" .Values.postgresql.existingSecretKey }}
-        {{- end }}
-        {{ if and (eq .Values.filestore.backend "gcs") .Values.filestore.gcs.secretName }}
-        - name: GOOGLE_APPLICATION_CREDENTIALS
-          value: /var/run/secrets/google/{{ .Values.filestore.gcs.credentialsFile }}
-        {{ end }}
+{{ include "sentry.env" . | indent 8 }}
 {{- if .Values.sentry.ingestConsumer.env }}
 {{ toYaml .Values.sentry.ingestConsumer.env | indent 8 }}
 {{- end }}
