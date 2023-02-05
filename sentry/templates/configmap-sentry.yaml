@@ -263,6 +263,10 @@ data:
     KAFKA_INGEST_ATTACHMENTS = {{ .ingestAttachments | quote }}
     KAFKA_INGEST_TRANSACTIONS = {{ .ingestTransactions | quote }}
 
+    KAFKA_INGEST_PERFORMANCE_METRICS = {{ .ingestPerformanceMetrics | quote }}
+    KAFKA_INGEST_METRICS = {{ .ingestMetrics | quote }}
+    KAFKA_SNUBA_GENERIC_METRICS = {{ .snubaGenericMetrics | quote }}
+    KAFKA_SNUBA_METRICS = {{ .snubaMetrics | quote }}
 
     KAFKA_TOPICS = {
         KAFKA_EVENTS: {"cluster": "default", "topic": KAFKA_EVENTS},
@@ -282,6 +286,13 @@ data:
         KAFKA_INGEST_ATTACHMENTS: {"cluster": "default", "topic": KAFKA_INGEST_ATTACHMENTS},
         # Topic for receiving transaction events (APM events) from Relay
         KAFKA_INGEST_TRANSACTIONS: {"cluster": "default", "topic": KAFKA_INGEST_TRANSACTIONS},
+        # Topic for receiving metrics from Relay
+        KAFKA_INGEST_METRICS: {"cluster": "default", "topic": KAFKA_INGEST_METRICS},
+        # Topic for receiving profiles from Relay
+        KAFKA_INGEST_PERFORMANCE_METRICS: {"cluster": "default", "topic": KAFKA_INGEST_PERFORMANCE_METRICS},
+        KAFKA_SNUBA_GENERIC_METRICS: {"cluster": "default", "topic": KAFKA_SNUBA_GENERIC_METRICS},
+        KAFKA_SNUBA_METRICS: {"cluster": "default", "topic": KAFKA_SNUBA_METRICS},
+        
     }
 
     {{- end }}

@@ -76,6 +76,8 @@ spec:
         args:
           - "run"
           - "post-process-forwarder"
+          - --commit-log-topic
+          - {{ .Values.externalKafka.topics.commitLog | quote }}
           - "--commit-batch-size"
           - "{{ default "1" .Values.sentry.postProcessForwardErrors.commitBatchSize }}"
           - "--entity"

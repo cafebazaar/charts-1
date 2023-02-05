@@ -40,9 +40,9 @@ data:
         transactions: {{ .ingestTransactions | quote }}
         sessions: {{ .ingestSessions | quote }}
         outcomes: {{ .outcomes | quote }}
+        metrics_transactions: {{ .ingestPerformanceMetrics | quote }}
+        metrics_sessions: {{ .ingestMetrics | quote }}
       {{- end }}
-        metrics_transactions: ingest-performance-metrics
-        metrics_sessions: ingest-metrics
       {{- end }}
 
       {{- if $redisPass }}
