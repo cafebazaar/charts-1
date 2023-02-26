@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ template "sentry.fullname" . }}-ingest-consumer-transactions
+  name: {{ template "sentry.fullname" . }}-ingest-consumer
   labels:
     app: {{ template "sentry.fullname" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
@@ -22,7 +22,7 @@ spec:
     matchLabels:
       app: {{ template "sentry.fullname" . }}
       release: "{{ .Release.Name }}"
-      role: ingest-consumer-transactions
+      role: ingest-consumer
 {{- if not .Values.sentry.ingestConsumer.autoscaling.enabled }}
   replicas: {{ .Values.sentry.ingestConsumer.replicas }}
 {{- end }}
@@ -38,7 +38,7 @@ spec:
       labels:
         app: {{ template "sentry.fullname" . }}
         release: "{{ .Release.Name }}"
-        role: ingest-consumer-transactions
+        role: ingest-consumer
         {{- if .Values.sentry.ingestConsumer.podLabels }}
 {{ toYaml .Values.sentry.ingestConsumer.podLabels | indent 8 }}
         {{- end }}
@@ -59,23 +59,26 @@ spec:
       imagePullSecrets:
 {{ toYaml .Values.images.sentry.imagePullSecrets | indent 8 }}
       {{- end }}
+      {{- if .Values.dnsPolicy }}
+      dnsPolicy: {{ .Values.dnsPolicy | quote }}
+      {{- end }}
+      {{- if .Values.dnsConfig }}
+      dnsConfig:
+{{ toYaml .Values.dnsConfig | indent 8 }}
+      {{- end }}
       {{- if .Values.sentry.ingestConsumer.securityContext }}
       securityContext:
 {{ toYaml .Values.sentry.ingestConsumer.securityContext | indent 8 }}
       {{- end }}
       containers:
-      - name: {{ .Chart.Name }}-ingest-consumer-transactions
+      - name: {{ .Chart.Name }}-ingest-consumer
         image: "{{ template "sentry.image" . }}"
         imagePullPolicy: {{ default "IfNotPresent" .Values.images.sentry.pullPolicy }}
+        command: ["sentry"]
         args:
           - "run"
           - "ingest-consumer"
-          - "--consumer-type"
-          - "transactions"
-          {{- if and (not .Values.kafka.enabled) .Values.externalKafka.consumerGroups }}
-          - "--consumer-group"
-          - "{{ .Values.externalKafka.consumerGroups.ingestConsumer }}"
-          {{- end }}
+          - "--all-consumer-types"
           {{- if .Values.sentry.ingestConsumer.concurrency }}
           - "--concurrency"
           - "{{ .Values.sentry.ingestConsumer.concurrency }}"
@@ -87,17 +90,10 @@ spec:
         env:
         - name: C_FORCE_ROOT
           value: "true"
-        - name: METRICS_PREFIX
-          value: "ingest_consumer"
-        - name: SENTRY_LOG_LEVEL
-          value: {{ .Values.sentry.logging.level | default "INFO" | quote }}
 {{ include "sentry.env" . | indent 8 }}
 {{- if .Values.sentry.ingestConsumer.env }}
 {{ toYaml .Values.sentry.ingestConsumer.env | indent 8 }}
 {{- end }}
-        envFrom:
-        - secretRef:
-            name: {{ template "sentry.fullname" . }}-sentry-env
         volumeMounts:
         - mountPath: /etc/sentry
           name: config
@@ -112,7 +108,7 @@ spec:
 {{ toYaml .Values.sentry.ingestConsumer.volumeMounts | indent 8 }}
 {{- end }}
         resources:
-{{ toYaml .Values.sentry.ingestConsumer.resources | indent 10 }}
+{{ toYaml .Values.sentry.ingestConsumer.resources | indent 12 }}
 {{- if .Values.sentry.ingestConsumer.sidecars }}
 {{ toYaml .Values.sentry.ingestConsumer.sidecars | indent 6 }}
 {{- end }}
@@ -125,8 +121,13 @@ spec:
           name: {{ template "sentry.fullname" . }}-sentry
       - name: sentry-data
       {{- if and (eq .Values.filestore.backend "filesystem") .Values.filestore.filesystem.persistence.enabled (.Values.filestore.filesystem.persistence.persistentWorkers) }}
+      {{- if .Values.filestore.filesystem.persistence.existingClaim }}
+        persistentVolumeClaim:
+          claimName: {{ .Values.filestore.filesystem.persistence.existingClaim }}
+      {{- else }}
         persistentVolumeClaim:
           claimName: {{ template "sentry.fullname" . }}-data
+      {{- end }}
       {{- else }}
         emptyDir: {}
       {{ end }}
